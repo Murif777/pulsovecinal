@@ -1,0 +1,24 @@
+Procedimientos:
+1. Se deberá establecer equipos de trabajo de mínimo 2 y máximo 3 estudiantes
+2. Configurar un entorno de trabajo, para lo cual se deberá tener en cuenta:
+− Git
+− Docker Desktop o Docker Engine
+− Entorno de desarrollo (el de su preferencia, node, python, etc)
+− Editor de código (de su preferencia)
+− Cuenta activa en GitHub
+3. Implementar una aplicación web básica (no requiere DB), se debe tener en cuenta lo siguiente:
+− La app debe ofrecer 2 o 3 funcionalidades (de acuerdo con el numero de integrantes del grupo)
+− Se debe implementar una estrategia básica de versionamiento tipo Trunk-Based Development. Cada
+miembro del equipo se encargara de desarrollar una feature de la aplicación en su respectiva rama
+(branches)
+− Realizar la integración final de las feature en la rama principal (main)
+4. Dockerizar la aplicación desarrollada:
+− Crear un archivo Dockerfile con la configuración necesaria para la creación de la imagen Docker de su
+aplicación
+− Crear la imagen de contenedor a partir del Dockerfile y la ejecución de docker build
+− Almacenar la imagen Docker en un sistema de registro o repositorio de imágenes como dockerhub
+5. Probar y ejecutar su aplicación
+Sustentación (evidencias):
+1. Repositorio git del proyecto (se debe evidenciar el flujo de commit de la aplicación de la estrategia git thunk-based
+2. Repositorio DockerHub con la imagen Docker de la aplicación contenerizada
+3. Ejecución y demostración de la aplicación (docker run)
