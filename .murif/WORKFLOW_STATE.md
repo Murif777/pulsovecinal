@@ -27,6 +27,12 @@ desviaciones:
   - Contratos según instrucción del orquestador (prevalece sobre PLAN.md §3): tipo ComplaintCategory (plan decía SurveyCategory), Severity con 3 niveles baja/media/alta (plan tenía 4 con 'critica'), campos description/encuestador/date (plan: notes/date), 20 registros mock (plan: 8-10), helpers getDashboardSummary()/getMapReports() con parámetro opcional para testeabilidad (plan: constantes derivadas exportadas).
   - Test unitario ubicado en src/lib/__tests__/mockData.test.ts (ruta explícita del orquestador) en vez de src/__tests__/ del árbol del plan §2; el glob de vitest (src/**/*.test.*) cubre ambas ubicaciones.
 verificación: npm run typecheck ✓ · npm run test ✓ (8 tests nuevos: categorías válidas ×6, severidades válidas, comunas geocodificables, totales consistentes con el array, ranking descendente, periodo min/max, agregación sin pérdida, coordenadas dentro de Valledupar)
+slice_4: completado 2026-08-22
+archivos: [src/components/PlaceholderPage.tsx, src/features/encuesta/EncuestaPage.tsx, src/features/mapa/MapaPage.tsx, src/features/dashboard/DashboardPage.tsx, src/__tests__/app.smoke.test.tsx]
+desviaciones:
+  - Placeholder compartido en src/components/PlaceholderPage.tsx (archivo nuevo, aditivo; no toca lo congelado de S2): evita triplicar el markup y garantiza consistencia visual con la landing; las 3 páginas quedan en ~10 líneas.
+  - Warnings de React Router v7 future flags en tests dejados tal cual (instrucción del orquestador: inofensivos; App.tsx permanece congelado tras S2).
+verificación: npm run lint ✓ · npm run typecheck ✓ · npm run build ✓ · npm run test ✓ (16 tests totales; smoke ampliado: título h1 + badge "En construcción" + nota "Feature asignada" en /encuesta, /mapa y /dashboard)
 ## tester
 (vacío)
 ## reviewer

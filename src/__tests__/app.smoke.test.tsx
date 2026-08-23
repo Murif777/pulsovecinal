@@ -44,4 +44,16 @@ describe('App', () => {
     const heading = screen.getByRole('heading', { level: 1 })
     expect(heading.textContent).toBe(expectedTitle)
   })
+
+  it.each([
+    '/encuesta',
+    '/mapa',
+    '/dashboard',
+  ])('shows the construction badge on %s', (path) => {
+    renderRoute(path)
+
+    expect(screen.getByRole('heading', { level: 1 })).toBeTruthy()
+    expect(screen.getByText(/En construcción/)).toBeTruthy()
+    expect(screen.getByText(/Feature asignada/)).toBeTruthy()
+  })
 })
