@@ -21,6 +21,12 @@ desviaciones:
   - Stubs de features aún más mínimos que "páginas placeholder mínimas con título" del plan S2: título + línea "Sección en construcción", sin badge ni descripción larga (instrucción explícita del orquestador: el placeholder completo con badge "En construcción" es S4).
   - Iconos SVG inline propios estilo Lucide en la landing (sin librería de iconos, según instrucción).
 verificación: npm run lint ✓ · npm run typecheck ✓ · npm run build ✓ · npm run test ✓ (5 tests: tagline + 3 hrefs + navegación por click en navbar ×3)
+slice_3: completado 2026-08-22
+archivos: [src/lib/types.ts, src/lib/mockData.ts, src/lib/__tests__/mockData.test.ts]
+desviaciones:
+  - Contratos según instrucción del orquestador (prevalece sobre PLAN.md §3): tipo ComplaintCategory (plan decía SurveyCategory), Severity con 3 niveles baja/media/alta (plan tenía 4 con 'critica'), campos description/encuestador/date (plan: notes/date), 20 registros mock (plan: 8-10), helpers getDashboardSummary()/getMapReports() con parámetro opcional para testeabilidad (plan: constantes derivadas exportadas).
+  - Test unitario ubicado en src/lib/__tests__/mockData.test.ts (ruta explícita del orquestador) en vez de src/__tests__/ del árbol del plan §2; el glob de vitest (src/**/*.test.*) cubre ambas ubicaciones.
+verificación: npm run typecheck ✓ · npm run test ✓ (8 tests nuevos: categorías válidas ×6, severidades válidas, comunas geocodificables, totales consistentes con el array, ranking descendente, periodo min/max, agregación sin pérdida, coordenadas dentro de Valledupar)
 ## tester
 (vacío)
 ## reviewer
