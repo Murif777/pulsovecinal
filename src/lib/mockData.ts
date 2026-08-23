@@ -51,7 +51,7 @@ function response(data: Omit<SurveyResponse, 'comuna'>): SurveyResponse {
  * Dates are uniform ISO UTC strings, so lexicographic order equals chronological order.
  */
 export const mockSurveyResponses: readonly SurveyResponse[] = [
-  response({ id: 'resp-001', barrio: 'La Esperanza', category: 'alcantarillado', severity: 'alta', date: '2026-08-01T14:30:00.000Z', description: 'Alcantarillado rebosando en la carrera 7 con calle 11', encuestador: 'Ana Martínez' }),
+  response({ id: 'resp-001', barrio: 'La Esperanza', category: 'alcantarillado', severity: 'critica', date: '2026-08-01T14:30:00.000Z', description: 'Alcantarillado rebosando en la carrera 7 con calle 11', encuestador: 'Ana Martínez' }),
   response({ id: 'resp-002', barrio: 'La Esperanza', category: 'seguridad', severity: 'media', date: '2026-08-02T16:05:00.000Z', description: 'Falta alumbrado en el parque y hay hurtos nocturnos', encuestador: 'Ana Martínez' }),
   response({ id: 'resp-003', barrio: 'El Popul', category: 'energia', severity: 'alta', date: '2026-08-03T09:15:00.000Z', description: 'Transformador chisporrotea en la carrera 6', encuestador: 'Carlos Guerra' }),
   response({ id: 'resp-004', barrio: 'El Popul', category: 'energia', severity: 'media', date: '2026-08-04T11:40:00.000Z', description: 'Apagones diarios en la cuadra 18', encuestador: 'Carlos Guerra' }),
@@ -60,7 +60,7 @@ export const mockSurveyResponses: readonly SurveyResponse[] = [
   response({ id: 'resp-007', barrio: 'Bello Horizonte', category: 'seguridad', severity: 'alta', date: '2026-08-06T19:10:00.000Z', description: 'Microtráfico frente al colegio', encuestador: 'Jorge Daza' }),
   response({ id: 'resp-008', barrio: 'La Paz', category: 'alcantarillado', severity: 'media', date: '2026-08-07T10:35:00.000Z', description: 'Mal olor permanente por caño destapado', encuestador: 'María Fuentes' }),
   response({ id: 'resp-009', barrio: 'Cañaveral', category: 'otros', severity: 'baja', date: '2026-08-08T13:25:00.000Z', description: 'Basuras sin recolección oportuna los fines de semana', encuestador: 'María Fuentes' }),
-  response({ id: 'resp-010', barrio: 'La Nevada', category: 'energia', severity: 'alta', date: '2026-08-09T07:55:00.000Z', description: 'Cables caídos sobre la vía principal', encuestador: 'Andrés Rincón' }),
+  response({ id: 'resp-010', barrio: 'La Nevada', category: 'energia', severity: 'critica', date: '2026-08-09T07:55:00.000Z', description: 'Cables caídos sobre la vía principal', encuestador: 'Andrés Rincón' }),
   response({ id: 'resp-011', barrio: 'Los Cortijos', category: 'vias', severity: 'media', date: '2026-08-10T12:00:00.000Z', description: 'No pasa transporte público por falta de pavimento', encuestador: 'Andrés Rincón' }),
   response({ id: 'resp-012', barrio: 'El Prado', category: 'seguridad', severity: 'media', date: '2026-08-11T17:45:00.000Z', description: 'Robo de cables en el barrio', encuestador: 'Paola Mendoza' }),
   response({ id: 'resp-013', barrio: 'Dangond', category: 'espacios_publicos', severity: 'alta', date: '2026-08-12T09:30:00.000Z', description: 'Cancha comunal invadida por escombros', encuestador: 'Paola Mendoza' }),
@@ -86,7 +86,8 @@ interface ReportAccumulator {
   lng: number
   category: ComplaintCategory
   severity: Severity
-  complaintCount: number
+  count: number
+  lastDate: string
 }
 
 /**
@@ -105,8 +106,9 @@ export function getMapReports(responses: readonly SurveyResponse[] = mockSurveyR
     const key = `${item.barrio}::${item.category}`
     const existing = groups.get(key)
     if (existing) {
-      existing.complaintCount += 1
+      existing.count += 1
       existing.severity = maxSeverity(existing.severity, item.severity)
+      existing.lastDate = item.date > existing.lastDate ? item.date : existing.lastDate
       continue
     }
     groups.set(key, {
@@ -116,7 +118,8 @@ export function getMapReports(responses: readonly SurveyResponse[] = mockSurveyR
       lng: location.lng,
       category: item.category,
       severity: item.severity,
-      complaintCount: 1,
+      count: 1,
+      lastDate: item.date,
     })
   }
   return [...groups.values()]
@@ -128,7 +131,8 @@ export function getMapReports(responses: readonly SurveyResponse[] = mockSurveyR
       lng: entry.lng,
       category: entry.category,
       severity: entry.severity,
-      complaintCount: entry.complaintCount,
+      count: entry.count,
+      lastReportedAt: entry.lastDate,
     }))
     .sort(
       (a, b) =>
@@ -174,9 +178,9 @@ interface BarrioAccumulator {
 }
 
 /**
- * Builds the dashboard summary from the given responses: totals per category,
- * barrios ranked by criticality (complaints weighted by severity) and period.
- * Defaults to the full mock dataset.
+ * Builds the dashboard summary from the given responses: totals per category
+ * and severity, barrios ranked by criticality (complaints weighted by
+ * severity) and period. Defaults to the full mock dataset.
  */
 export function getDashboardSummary(
   responses: readonly SurveyResponse[] = mockSurveyResponses,
@@ -189,10 +193,17 @@ export function getDashboardSummary(
     espacios_publicos: 0,
     otros: 0,
   }
+  const bySeverity: Record<Severity, number> = {
+    baja: 0,
+    media: 0,
+    alta: 0,
+    critica: 0,
+  }
   const barrios = new Map<string, BarrioAccumulator>()
 
   for (const item of responses) {
     byCategory[item.category] += 1
+    bySeverity[item.severity] += 1
 
     const existing = barrios.get(item.barrio)
     if (existing) {
@@ -221,6 +232,7 @@ export function getDashboardSummary(
   return {
     totalResponses: responses.length,
     byCategory,
+    bySeverity,
     criticalBarrios,
     period: computePeriod(responses),
   }

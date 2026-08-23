@@ -18,6 +18,14 @@ describe('mockSurveyResponses', () => {
     }
   })
 
+  it('includes at least one response for each of the four severity levels', () => {
+    const used = new Set(mockSurveyResponses.map((response) => response.severity))
+
+    for (const severity of ALL_SEVERITIES) {
+      expect(used).toContain(severity)
+    }
+  })
+
   it('resolves the comuna of every response against a known Valledupar barrio', () => {
     // getMapReports throws when a barrio has no registered coordinates,
     // so a successful aggregation proves the whole array is geocodable.
@@ -35,6 +43,14 @@ describe('getDashboardSummary', () => {
     expect(Object.keys(summary.byCategory)).toHaveLength(6)
     expect(summary.totalResponses).toBe(mockSurveyResponses.length)
     expect(categoryTotal).toBe(summary.totalResponses)
+  })
+
+  it('totals per severity are consistent with the mock array length', () => {
+    const summary = getDashboardSummary()
+    const severityTotal = Object.values(summary.bySeverity).reduce((sum, count) => sum + count, 0)
+
+    expect(Object.keys(summary.bySeverity)).toHaveLength(4)
+    expect(severityTotal).toBe(summary.totalResponses)
   })
 
   it('ranks barrios by criticality in descending score order', () => {
@@ -60,9 +76,17 @@ describe('getDashboardSummary', () => {
 describe('getMapReports', () => {
   it('aggregates one report per barrio and category without losing responses', () => {
     const reports = getMapReports()
-    const aggregatedCount = reports.reduce((sum, report) => sum + report.complaintCount, 0)
+    const aggregatedCount = reports.reduce((sum, report) => sum + report.count, 0)
 
     expect(aggregatedCount).toBe(mockSurveyResponses.length)
+  })
+
+  it('exposes count and lastReportedAt per aggregation group', () => {
+    const reports = getMapReports()
+    const populEnergia = reports.find((report) => report.barrio === 'El Popul' && report.category === 'energia')
+
+    expect(populEnergia?.count).toBe(2)
+    expect(populEnergia?.lastReportedAt).toBe('2026-08-04T11:40:00.000Z')
   })
 
   it('places every report inside Valledupar bounds', () => {

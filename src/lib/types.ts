@@ -15,6 +15,9 @@ export type ComplaintCategory =
   | 'espacios_publicos'
   | 'otros'
 
+/** Backward-compatible alias for consumers written against the PLAN.md §3 naming. */
+export type SurveyCategory = ComplaintCategory
+
 /** All categories, in canonical order (form dropdowns, tallies, tests). */
 export const ALL_CATEGORIES = [
   'seguridad',
@@ -36,10 +39,10 @@ export const CATEGORY_LABELS: Readonly<Record<ComplaintCategory, string>> = {
 }
 
 /** Urgency level that the citizen assigns to a complaint. */
-export type Severity = 'baja' | 'media' | 'alta'
+export type Severity = 'baja' | 'media' | 'alta' | 'critica'
 
 /** All severity levels, from least to most urgent. */
-export const ALL_SEVERITIES = ['baja', 'media', 'alta'] as const satisfies readonly Severity[]
+export const ALL_SEVERITIES = ['baja', 'media', 'alta', 'critica'] as const satisfies readonly Severity[]
 
 /**
  * Weight of each severity when computing barrio criticality scores.
@@ -49,6 +52,7 @@ export const SEVERITY_WEIGHTS: Readonly<Record<Severity, number>> = {
   baja: 1,
   media: 2,
   alta: 3,
+  critica: 4,
 }
 
 /** One citizen survey answer, as collected by an encuestador. */
@@ -71,6 +75,9 @@ export interface SurveyResponse {
 /**
  * Aggregated view model consumed by the future Leaflet map: one report per
  * (barrio, category) pair with its geographic position and complaint count.
+ * `lat`/`lng` are REQUIRED by design: getMapReports() resolves coordinates
+ * from the BARRIO_LOCATIONS registry and throws if a barrio is missing, so
+ * every emitted report is always geocodable.
  */
 export interface MapReport {
   readonly id: string
@@ -81,7 +88,10 @@ export interface MapReport {
   readonly category: ComplaintCategory
   /** Highest severity reported within this aggregation group. */
   readonly severity: Severity
-  readonly complaintCount: number
+  /** Number of survey responses aggregated into this report. */
+  readonly count: number
+  /** ISO timestamp of the most recent response in the group. */
+  readonly lastReportedAt: string
 }
 
 /** A barrio ranked by weighted complaint score, led by its most frequent category. */
@@ -104,6 +114,8 @@ export interface DashboardSummary {
   readonly totalResponses: number
   /** Response count per category; always contains all six keys. */
   readonly byCategory: Readonly<Record<ComplaintCategory, number>>
+  /** Response count per severity; always contains all four keys. */
+  readonly bySeverity: Readonly<Record<Severity, number>>
   /** Barrios sorted by descending criticality score. */
   readonly criticalBarrios: readonly CriticalBarrio[]
   /** Period spanned by the underlying responses. */
