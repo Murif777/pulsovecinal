@@ -33,6 +33,12 @@ desviaciones:
   - Placeholder compartido en src/components/PlaceholderPage.tsx (archivo nuevo, aditivo; no toca lo congelado de S2): evita triplicar el markup y garantiza consistencia visual con la landing; las 3 páginas quedan en ~10 líneas.
   - Warnings de React Router v7 future flags en tests dejados tal cual (instrucción del orquestador: inofensivos; App.tsx permanece congelado tras S2).
 verificación: npm run lint ✓ · npm run typecheck ✓ · npm run build ✓ · npm run test ✓ (16 tests totales; smoke ampliado: título h1 + badge "En construcción" + nota "Feature asignada" en /encuesta, /mapa y /dashboard)
+slice_5: completado 2026-08-22
+archivos: [README.md, .gitignore]
+desviaciones:
+  - .omo/ estaba TRACKED en git (commits previos): además de añadirlo a .gitignore se ejecutó git rm -r --cached .omo para dejar de versionarlo (artefactos internos de opencode).
+  - README incluye badge de CI, tabla de asignación A/B/C y paso a paso git por integrante según instrucción del orquestador; el plan §4 lo tenía como opcional el PR template (no creado).
+verificación: npm run test ✓ (16/16) · push a origin/main exitoso · git ls-remote origin muestra main
 ## tester
 (vacío)
 ## reviewer

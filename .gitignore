@@ -23,6 +23,7 @@ coverage
 
 # Tool caches (local only)
 .codegraph/
+.omo/
 
 # Editor directories and files
 .vscode/*
