@@ -106,6 +106,12 @@ describe('activeFilterCount / chips', () => {
   })
 })
 
+describe('EMPTY_FILTERS', () => {
+  it('includes citizen reports by default', () => {
+    expect(EMPTY_FILTERS.includeCitizen).toBe(true)
+  })
+})
+
 describe('dateBounds / presetRange', () => {
   it('returns the min and max YYYY-MM-DD of the mock dataset', () => {
     expect(dateBounds(mockSurveyResponses)).toEqual({ start: '2026-08-01', end: '2026-08-19' })

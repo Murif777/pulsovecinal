@@ -1,6 +1,8 @@
 import { fireEvent, render, screen, within } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import MapaPage from '../MapaPage'
+import { SURVEY_STORAGE_KEY } from '../../../lib/surveyStorage'
+import { installMemoryLocalStorage } from '../../dashboard/__tests__/memoryLocalStorage'
 
 // jsdom cannot instantiate a real Leaflet map, so react-leaflet is replaced
 // with functional stubs (the async factory avoids the vi.mock hoisting pitfall).
@@ -13,6 +15,10 @@ vi.mock('react-leaflet', async () => {
     CircleMarker: () => null,
     Popup: () => null,
   }
+})
+
+beforeEach(() => {
+  installMemoryLocalStorage()
 })
 
 describe('MapaPage', () => {
@@ -68,5 +74,30 @@ describe('MapaPage', () => {
     expect(screen.queryByRole('status')).toBeNull()
     expect(screen.getByRole('button', { name: 'Otros' }).getAttribute('aria-pressed')).toBe('false')
     expect(screen.getByText('15')).toBeTruthy()
+  })
+
+  it('merges citizen responses from localStorage with the mock dataset', () => {
+    // One citizen registration in the same barrio+category as a mock report
+    // (La Esperanza / alcantarillado): the total report count must go 20 → 21
+    // while the barrio count stays at 15.
+    window.localStorage.setItem(
+      SURVEY_STORAGE_KEY,
+      JSON.stringify([
+        {
+          id: 'citizen-001',
+          barrio: 'La Esperanza',
+          comuna: 'Comuna 2',
+          category: 'alcantarillado',
+          severity: 'alta',
+          description: 'Caño destapado reportado por un vecino',
+          date: '2026-08-20T10:00:00.000Z',
+        },
+      ]),
+    )
+
+    render(<MapaPage />)
+
+    expect(screen.getByText('15')).toBeTruthy()
+    expect(screen.getByText('21')).toBeTruthy()
   })
 })

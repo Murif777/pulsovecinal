@@ -85,3 +85,23 @@ describe('isSurveyResponse', () => {
     expect(isSurveyResponse({ ...valid, barrio: 'No Existe' })).toBe(false)
   })
 })
+
+describe('storage shim (encuesta/storage re-exports lib/surveyStorage)', () => {
+  it('re-exports the canonical implementation from src/lib/surveyStorage', async () => {
+    const lib = await import('../../lib/surveyStorage')
+
+    expect(loadSurveyResponses).toBe(lib.loadSurveyResponses)
+    expect(saveSurveyResponses).toBe(lib.saveSurveyResponses)
+    expect(appendSurveyResponse).toBe(lib.appendSurveyResponse)
+    expect(createSurveyResponse).toBe(lib.createSurveyResponse)
+    expect(isSurveyResponse).toBe(lib.isSurveyResponse)
+    expect(SURVEY_STORAGE_KEY).toBe(lib.SURVEY_STORAGE_KEY)
+  })
+
+  it('round-trips a response through the shim with memory localStorage', () => {
+    const response = createSurveyResponse(sample)
+    saveSurveyResponses([response])
+
+    expect(loadSurveyResponses()).toEqual([response])
+  })
+})
