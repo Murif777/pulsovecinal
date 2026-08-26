@@ -1,12 +1,20 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
-import { getDashboardSummary, getMapReports } from '../../lib/mockData'
+import { getDashboardSummary, getMapReports, mockSurveyResponses } from '../../lib/mockData'
 import { CATEGORY_LABELS } from '../../lib/types'
 import CategoryChart from './components/CategoryChart'
+import ComunaFilter from './components/ComunaFilter'
 import KpiCard from './components/KpiCard'
 import RankingTable from './components/RankingTable'
 import SeverityChart from './components/SeverityChart'
-import { buildRanking, categoryDistribution, computeKpis, severityDistribution } from './dashboardUtils'
+import {
+  buildRanking,
+  categoryDistribution,
+  comunaOptions,
+  computeKpis,
+  filterResponsesByComuna,
+  severityDistribution,
+} from './dashboardUtils'
 
 /** Decorative heartbeat glyph for the page eyebrow (the PulsoVecinal mark). */
 function PulseMark() {
@@ -50,12 +58,19 @@ function SummaryBadge({ icon, children }: SummaryBadgeProps) {
  * categoryDistribution / severityDistribution -> presentational components.
  */
 export default function DashboardPage() {
-  const summary = useMemo(() => getDashboardSummary(), [])
+  const [selectedComuna, setSelectedComuna] = useState<string | null>(null)
+
+  const filteredResponses = useMemo(
+    () => filterResponsesByComuna(mockSurveyResponses, selectedComuna),
+    [selectedComuna],
+  )
+  const summary = useMemo(() => getDashboardSummary(filteredResponses), [filteredResponses])
   const kpis = useMemo(() => computeKpis(summary), [summary])
-  const reports = useMemo(() => getMapReports(), [])
+  const reports = useMemo(() => getMapReports(filteredResponses), [filteredResponses])
   const ranking = useMemo(() => buildRanking(summary, reports), [summary, reports])
   const categoryData = useMemo(() => categoryDistribution(summary), [summary])
   const severityData = useMemo(() => severityDistribution(summary), [summary])
+  const comunaOptionsList = useMemo(() => comunaOptions(mockSurveyResponses), [])
 
   return (
     <section className="mx-auto w-full max-w-6xl px-4 pb-16 pt-10 sm:px-6">
@@ -74,8 +89,16 @@ export default function DashboardPage() {
         <SummaryBadge icon="📅">
           Periodo: {summary.period.start.slice(0, 10)} → {summary.period.end.slice(0, 10)}
         </SummaryBadge>
-        <SummaryBadge icon="🧭">Comuna activa: todas</SummaryBadge>
+        <SummaryBadge icon="🧭">Comuna activa: {selectedComuna ?? 'todas'}</SummaryBadge>
       </ul>
+
+      <div className="mt-6">
+        <ComunaFilter
+          options={comunaOptionsList}
+          selected={selectedComuna}
+          onSelect={setSelectedComuna}
+        />
+      </div>
 
       <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard icon="📊" label="Reportes totales" value={String(kpis.totalResponses)} />
