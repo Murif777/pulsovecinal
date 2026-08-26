@@ -26,7 +26,9 @@ export const EMPTY_FILTERS: DashboardFilters = {
   severities: [],
   from: null,
   to: null,
-  includeCitizen: false,
+  // Citizen reports are part of the default dataset: the dashboard shows
+  // everything the browser has, and the toggle only hides them.
+  includeCitizen: true,
 }
 
 export type DatePreset = '7d' | '15d' | 'all'

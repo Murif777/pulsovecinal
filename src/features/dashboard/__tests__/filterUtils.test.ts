@@ -65,7 +65,8 @@ describe('applyFilters', () => {
 
 describe('activeFilterCount / chips', () => {
   it('counts each active group once', () => {
-    expect(activeFilterCount(base)).toBe(0)
+    // The citizen source is ON by default, so the base filters already count 1.
+    expect(activeFilterCount(base)).toBe(1)
     expect(
       activeFilterCount({
         ...base,
