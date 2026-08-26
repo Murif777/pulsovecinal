@@ -26,16 +26,16 @@ export default function EncuestaPage() {
   }
 
   return (
-    <div className="bg-gradient-to-b from-teal-50 via-white to-slate-50">
-      <section className="border-b border-teal-100 bg-teal-700 text-white">
+    <div className="bg-gradient-to-b from-teal-50/60 to-white">
+      <section className="border-b border-slate-100">
         <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
-          <span className="inline-flex items-center rounded-full border border-teal-400/40 bg-teal-600 px-3 py-1 text-xs font-medium text-teal-50">
+          <span className="inline-flex items-center rounded-full border border-teal-200 bg-white px-3 py-1 text-xs font-medium text-teal-700">
             Valledupar · reporte ciudadano
           </span>
-          <h1 id="encuesta-heading" className="mt-5 text-3xl font-extrabold tracking-tight sm:text-5xl">
+          <h1 id="encuesta-heading" className="mt-5 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-5xl">
             Encuestas
           </h1>
-          <p className="mt-4 max-w-2xl text-base leading-7 text-teal-50 sm:text-lg">
+          <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
             Reporta una necesidad de tu barrio: elige la zona, la categoría del problema, qué tan urgente es y
             descríbelo. Tus respuestas quedan en este dispositivo para que puedas revisarlas.
           </p>
@@ -47,9 +47,9 @@ export default function EncuestaPage() {
           {STEPS.map((step) => (
             <div
               key={step.n}
-              className="flex items-start gap-3 rounded-2xl border border-teal-100 bg-white px-4 py-3"
+              className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3"
             >
-              <span className="font-mono text-sm font-bold text-teal-600">{step.n}</span>
+              <span className="font-mono text-sm font-medium text-teal-700">{step.n}</span>
               <span>
                 <span className="block text-sm font-semibold text-slate-900">{step.title}</span>
                 <span className="mt-0.5 block text-xs text-slate-500">{step.detail}</span>
@@ -61,7 +61,7 @@ export default function EncuestaPage() {
         {status === 'saved' ? (
           <p
             role="status"
-            className="mt-6 rounded-2xl border border-teal-200 bg-teal-600 px-4 py-3 text-sm font-medium text-white"
+            className="mt-6 rounded-2xl border border-teal-100 bg-teal-50 px-4 py-3 text-sm text-teal-900"
           >
             Tu reporte se guardó correctamente.
           </p>

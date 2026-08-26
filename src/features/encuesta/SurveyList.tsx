@@ -8,17 +8,17 @@ type SurveyListProps = {
 }
 
 const SEVERITY_CHIP: Readonly<Record<Severity, string>> = {
-  baja: 'bg-slate-100 text-slate-700',
-  media: 'bg-amber-100 text-amber-900',
-  alta: 'bg-orange-100 text-orange-900',
-  critica: 'bg-red-100 text-red-800',
+  baja: 'bg-slate-50 text-slate-600',
+  media: 'bg-amber-50 text-amber-800',
+  alta: 'bg-orange-50 text-orange-800',
+  critica: 'bg-rose-50 text-rose-800',
 }
 
 const SEVERITY_BAR: Readonly<Record<Severity, string>> = {
-  baja: 'border-l-slate-400',
-  media: 'border-l-amber-400',
-  alta: 'border-l-orange-500',
-  critica: 'border-l-red-500',
+  baja: 'border-l-slate-300',
+  media: 'border-l-amber-300',
+  alta: 'border-l-orange-300',
+  critica: 'border-l-rose-300',
 }
 
 function formatDate(iso: string): string {
@@ -94,28 +94,28 @@ function SurveyDetailDialog({ report, onClose }: DetailDialogProps) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/30 p-4"
       onClick={onClose}
     >
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="survey-detail-title"
-        className="max-h-[85vh] w-full max-w-lg overflow-y-auto overflow-x-hidden rounded-2xl bg-white"
+        className="max-h-[85vh] w-full max-w-lg overflow-y-auto overflow-x-hidden rounded-2xl border border-slate-200 bg-white"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="bg-teal-700 px-6 py-5 text-white">
+        <div className="border-b border-slate-100 bg-slate-50 px-6 py-5">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <h2 id="survey-detail-title" className="text-lg font-bold tracking-tight">
+              <h2 id="survey-detail-title" className="text-lg font-semibold tracking-tight text-slate-900">
                 Detalle del reporte
               </h2>
-              <p className="mt-1 text-sm text-teal-100">Consulta la ficha completa de este reporte</p>
+              <p className="mt-1 text-sm text-slate-600">Consulta la ficha completa de este reporte</p>
             </div>
             <button
               type="button"
               onClick={onClose}
-              className="shrink-0 rounded-lg bg-teal-600 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-teal-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              className="shrink-0 rounded-lg px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-slate-200/70 hover:text-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700"
             >
               Cerrar
             </button>
@@ -152,8 +152,8 @@ function SurveyDetailDialog({ report, onClose }: DetailDialogProps) {
             </dd>
           </div>
           {report.description ? (
-            <div className="min-w-0 rounded-xl bg-teal-50 px-4 py-3 sm:col-span-2">
-              <dt className="text-xs font-semibold uppercase tracking-wide text-teal-800">Descripción</dt>
+            <div className="min-w-0 rounded-xl bg-slate-50 px-4 py-3 sm:col-span-2">
+              <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">Descripción</dt>
               <dd className="mt-2 max-w-full whitespace-pre-wrap break-all text-sm leading-6 text-slate-800">
                 {report.description}
               </dd>
@@ -176,17 +176,17 @@ export default function SurveyList({ responses }: SurveyListProps) {
       aria-labelledby="survey-list-heading"
       className="min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white"
     >
-      <div className="flex items-start justify-between gap-3 bg-slate-900 px-6 py-5 text-white">
+      <div className="flex items-start justify-between gap-3 border-b border-slate-100 bg-slate-50 px-6 py-5">
         <div className="min-w-0">
-          <h2 id="survey-list-heading" className="text-lg font-bold tracking-tight">
+          <h2 id="survey-list-heading" className="text-lg font-semibold tracking-tight text-slate-900">
             Tus reportes
           </h2>
-          <p className="mt-1 text-sm text-slate-300">
+          <p className="mt-1 text-sm text-slate-600">
             Resumen en esta lista. Usa el ojo para ver el detalle completo.
           </p>
         </div>
         {items.length > 0 ? (
-          <span className="shrink-0 rounded-full bg-teal-500 px-2.5 py-1 text-xs font-bold text-white">
+          <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-xs font-medium text-slate-600 ring-1 ring-slate-200">
             {items.length}
           </span>
         ) : null}
@@ -194,8 +194,8 @@ export default function SurveyList({ responses }: SurveyListProps) {
 
       <div className="p-5">
         {items.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-teal-200 bg-teal-50/60 px-4 py-10 text-center">
-            <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-teal-100 text-teal-700">
+          <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-10 text-center">
+            <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-teal-700 ring-1 ring-slate-200">
               <ClipboardIcon className="h-6 w-6" />
             </span>
             <p className="mt-4 text-sm text-slate-600">
@@ -207,13 +207,13 @@ export default function SurveyList({ responses }: SurveyListProps) {
             {items.map((item) => (
               <li
                 key={item.id}
-                className={`flex min-w-0 items-center gap-3 rounded-xl border border-slate-200 border-l-4 bg-white px-3 py-3 transition hover:border-teal-200 hover:bg-teal-50/40 ${SEVERITY_BAR[item.severity]}`}
+                className={`flex min-w-0 items-center gap-3 rounded-xl border border-slate-200 border-l-4 bg-slate-50/60 px-3 py-3 transition hover:bg-white ${SEVERITY_BAR[item.severity]}`}
               >
                 <div className="min-w-0 flex-1 overflow-hidden">
                   <p className="truncate font-bold text-slate-900">{item.barrio}</p>
                   <p className="mt-1.5 flex min-w-0 flex-wrap items-center gap-2 text-sm text-slate-600">
                     <span className="truncate">{item.comuna}</span>
-                    <span className="rounded-full bg-teal-50 px-2 py-0.5 text-xs font-medium text-teal-800">
+                    <span className="rounded-full bg-white px-2 py-0.5 text-xs font-medium text-slate-600 ring-1 ring-slate-200">
                       {CATEGORY_LABELS[item.category]}
                     </span>
                     <span
@@ -230,7 +230,7 @@ export default function SurveyList({ responses }: SurveyListProps) {
                   type="button"
                   aria-label={`Ver detalles del reporte en ${item.barrio}`}
                   onClick={() => setSelectedId(item.id)}
-                  className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-teal-600 text-white transition hover:bg-teal-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600"
+                  className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-teal-700 transition hover:border-teal-200 hover:bg-teal-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700"
                 >
                   <EyeIcon className="h-5 w-5" />
                 </button>

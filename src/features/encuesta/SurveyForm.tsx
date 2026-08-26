@@ -62,7 +62,7 @@ function FieldLabel({
 }) {
   return (
     <div className="flex items-center gap-2">
-      <span aria-hidden="true" className="font-mono text-xs font-bold text-teal-600">
+      <span aria-hidden="true" className="font-mono text-xs font-medium text-teal-700">
         {step}
       </span>
       <label htmlFor={htmlFor} className="text-sm font-semibold text-slate-800">
@@ -99,11 +99,11 @@ export default function SurveyForm({ onSubmitted }: SurveyFormProps) {
       onSubmit={handleSubmit}
       noValidate
       aria-labelledby="encuesta-heading"
-      className="min-w-0 overflow-hidden rounded-2xl border border-teal-100 bg-white"
+      className="min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white"
     >
-      <div className="bg-teal-600 px-6 py-5 text-white">
-        <h2 className="text-lg font-bold tracking-tight">Reportar una necesidad</h2>
-        <p className="mt-1 text-sm text-teal-50">
+      <div className="border-b border-slate-100 bg-slate-50 px-6 py-5">
+        <h2 className="text-lg font-semibold tracking-tight text-slate-900">Reportar una necesidad</h2>
+        <p className="mt-1 text-sm text-slate-600">
           Completa los cuatro campos para registrar el problema de tu barrio.
         </p>
       </div>
@@ -220,7 +220,7 @@ export default function SurveyForm({ onSubmitted }: SurveyFormProps) {
 
         <button
           type="submit"
-          className="inline-flex w-full items-center justify-center rounded-xl bg-teal-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-teal-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600"
+          className="inline-flex w-full items-center justify-center rounded-xl bg-teal-700 px-4 py-3 text-sm font-semibold text-white transition hover:bg-teal-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700"
         >
           Enviar reporte
         </button>
