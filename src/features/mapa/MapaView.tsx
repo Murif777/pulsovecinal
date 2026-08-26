@@ -1,17 +1,15 @@
 import { CircleMarker, MapContainer, TileLayer } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import { getMapReports } from '../../lib/mockData'
-import { aggregateByBarrio, radiusForCount } from './mapUtils'
+import { aggregateByBarrio, radiusForCount, severityColor } from './mapUtils'
 
 /** City center of Valledupar used as the initial map viewport. */
 const VALLEDUPAR_CENTER: [number, number] = [10.46, -73.25]
 
-/** Neutral placeholder color until the severity traffic light lands. */
-const NEUTRAL_BLUE = '#2563eb'
-
 /**
  * Leaflet map with OpenStreetMap tiles centered on Valledupar, rendering one
- * CircleMarker per barrio whose radius grows with its total report count.
+ * CircleMarker per barrio: the radius grows with its total report count and
+ * the color is a criticality traffic light based on its maximum severity.
  * The wrapper has a fixed height: a MapContainer inside a zero-height box
  * renders an invisible map.
  */
@@ -34,8 +32,8 @@ export default function MapaView() {
             center={[marker.lat, marker.lng]}
             radius={radiusForCount(marker.count, minCount, maxCount)}
             pathOptions={{
-              color: NEUTRAL_BLUE,
-              fillColor: NEUTRAL_BLUE,
+              color: severityColor(marker.maxSeverity),
+              fillColor: severityColor(marker.maxSeverity),
               fillOpacity: 0.7,
               weight: 1,
             }}
