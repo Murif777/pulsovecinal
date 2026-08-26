@@ -43,9 +43,13 @@ export default function EncuestaPage() {
         </p>
       ) : null}
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-2 lg:items-start">
-        <SurveyForm onSubmitted={handleSubmitted} />
-        <SurveyList responses={responses} />
+      <div className="mt-8 grid min-w-0 gap-6 lg:grid-cols-2 lg:items-start">
+        <div className="min-w-0">
+          <SurveyForm onSubmitted={handleSubmitted} />
+        </div>
+        <div className="min-w-0">
+          <SurveyList responses={responses} />
+        </div>
       </div>
     </section>
   )

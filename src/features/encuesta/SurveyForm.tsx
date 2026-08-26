@@ -76,7 +76,7 @@ export default function SurveyForm({ onSubmitted }: SurveyFormProps) {
       onSubmit={handleSubmit}
       noValidate
       aria-labelledby="encuesta-heading"
-      className="rounded-xl border border-slate-200 bg-white p-6"
+      className="min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-white p-6"
     >
       <h2 className="text-lg font-semibold text-slate-900">Reportar una necesidad</h2>
       <p className="mt-1 text-sm text-slate-600">
@@ -180,7 +180,7 @@ export default function SurveyForm({ onSubmitted }: SurveyFormProps) {
             aria-required="true"
             aria-invalid={Boolean(errors.description)}
             aria-describedby={errors.description ? 'survey-description-error' : undefined}
-            className={errorClassName(Boolean(errors.description))}
+            className={`${errorClassName(Boolean(errors.description))} max-w-full break-all`}
             placeholder="Cuéntanos qué ocurre y dónde se presenta el problema."
             onChange={(event) => setValues((current) => ({ ...current, description: event.target.value }))}
           />
