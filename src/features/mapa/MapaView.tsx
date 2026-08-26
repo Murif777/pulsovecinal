@@ -1,20 +1,25 @@
 import { CircleMarker, MapContainer, Popup, TileLayer } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
-import { getMapReports } from '../../lib/mockData'
-import { aggregateByBarrio, breakdownByCategory, radiusForCount, severityColor } from './mapUtils'
+import type { BarrioMarker } from './mapUtils'
+import { breakdownByCategory, radiusForCount, severityColor } from './mapUtils'
 
 /** City center of Valledupar used as the initial map viewport. */
 const VALLEDUPAR_CENTER: [number, number] = [10.46, -73.25]
+
+type MapaViewProps = {
+  /** Aggregated and already-filtered markers, one per barrio. */
+  markers: readonly BarrioMarker[]
+}
 
 /**
  * Leaflet map with OpenStreetMap tiles centered on Valledupar, rendering one
  * CircleMarker per barrio: the radius grows with its total report count and
  * the color is a criticality traffic light based on its maximum severity.
+ * Purely presentational: it receives the markers ready to render.
  * The wrapper has a fixed height: a MapContainer inside a zero-height box
  * renders an invisible map.
  */
-export default function MapaView() {
-  const markers = aggregateByBarrio(getMapReports())
+export default function MapaView({ markers }: MapaViewProps) {
   const counts = markers.map((marker) => marker.count)
   const minCount = counts.length > 0 ? Math.min(...counts) : 0
   const maxCount = counts.length > 0 ? Math.max(...counts) : 0
