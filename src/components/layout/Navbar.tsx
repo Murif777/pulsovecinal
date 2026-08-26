@@ -26,7 +26,7 @@ function navLinkClassName({ isActive }: { isActive: boolean }) {
 /** Top navigation bar shared by every route. Links wrap on small screens. */
 export default function Navbar() {
   return (
-    <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/90 backdrop-blur">
+    <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/90 backdrop-blur">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 py-3 sm:px-6">
         <Link to="/" className="flex items-center gap-2 rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600">
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-teal-600 text-white" aria-hidden="true">
