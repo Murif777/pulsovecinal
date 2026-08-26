@@ -1,14 +1,16 @@
 import { getMapReports } from '../../lib/mockData'
+import { SURVEY_STORAGE_KEY } from '../../lib/surveyStorage'
 import type { ComplaintCategory, Severity, SurveyResponse } from '../../lib/types'
 import { ALL_CATEGORIES, ALL_SEVERITIES } from '../../lib/types'
 
 /**
  * Read-only access to citizen survey responses stored by /encuesta.
  * Lives inside the dashboard feature so it never imports from encuesta/
- * (TBD rule: features stay decoupled). The storage key matches the
- * encuesta convention by design.
+ * (TBD rule: features stay decoupled). The storage key is the canonical
+ * one from src/lib/surveyStorage.ts.
  */
-export const CITIZEN_STORAGE_KEY = 'pulsovecinal.surveyResponses'
+/** @deprecated Alias of SURVEY_STORAGE_KEY kept for dashboard callers. */
+export const CITIZEN_STORAGE_KEY = SURVEY_STORAGE_KEY
 
 /** Origin of a dashboard row: the shared mock dataset or a citizen form submit. */
 export type ReportSource = 'mock' | 'ciudadano'
@@ -82,7 +84,7 @@ function getLocalStorage(): Storage {
 export function loadCitizenResponses(): SourcedSurveyResponse[] {
   const barrios = knownBarrios()
   try {
-    const raw = getLocalStorage().getItem(CITIZEN_STORAGE_KEY)
+    const raw = getLocalStorage().getItem(SURVEY_STORAGE_KEY)
     if (!raw) {
       return []
     }
