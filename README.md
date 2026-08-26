@@ -69,6 +69,14 @@ docker run --rm -p 8080:80 pulsovecinal:local
 
 Para detener Compose: `docker compose down`.
 
+Desde Docker Hub (sin clonar el repo):
+
+```bash
+docker run --rm -p 8080:80 miguecaramirez/pulsovecinal:latest
+```
+
+Imagen: [miguecaramirez/pulsovecinal](https://hub.docker.com/r/miguecaramirez/pulsovecinal)
+
 ## Estructura del proyecto
 
 ```
@@ -156,8 +164,8 @@ Para el Integrante A usa `feat/encuesta` y `src/features/encuesta/`; para el Int
   - [x] Formulario de encuesta conectado a la capa de datos (A).
   - [x] Mapa interactivo en `/mapa` (B): Leaflet + OpenStreetMap con un `CircleMarker` por barrio (radio ∝ reportes, color = semáforo de severidad), popups con desglose por categoría, filtros por categoría/severidad/comuna y leyenda.
   - [x] Dashboard con gráficas y ranking de criticidad (C): KPIs, ranking de barrios más críticos, distribución por categoría/severidad (recharts), filtro por comuna y login simulado en `/login` (demo académica — **no es seguridad real**).
-- [x] **Fase 2 — Dockerización**: `Dockerfile` multi-stage (build Vite → nginx) y `docker compose up --build`. Publicar en DockerHub queda pendiente.
-- [ ] **Fase 3 — Demo con Docker**: `docker run -p 8080:80 <usuario>/pulsovecinal` como demostración de despliegue (local: `pulsovecinal:local`).
+- [x] **Fase 2 — Dockerización**: `Dockerfile` multi-stage (build Vite → nginx), `docker compose up --build` e imagen en Docker Hub: `miguecaramirez/pulsovecinal`.
+- [x] **Fase 3 — Demo con Docker**: `docker run --rm -p 8080:80 miguecaramirez/pulsovecinal:latest`.
 - [ ] **Fase futura**: backend/API real y base de datos, reemplazando la capa mock.
 
 ## Licencia
