@@ -45,15 +45,20 @@ describe('App', () => {
     expect(heading.textContent).toBe(expectedTitle)
   })
 
-  it.each([
-    '/encuesta',
-    '/mapa',
-    '/dashboard',
-  ])('shows the construction badge on %s', (path) => {
+  it.each(['/mapa', '/dashboard'])('shows the construction badge on %s', (path) => {
     renderRoute(path)
 
     expect(screen.getByRole('heading', { level: 1 })).toBeTruthy()
     expect(screen.getByText(/En construcción/)).toBeTruthy()
     expect(screen.getByText(/Feature asignada/)).toBeTruthy()
+  })
+
+  it('renders the citizen survey form on /encuesta instead of the placeholder', () => {
+    renderRoute('/encuesta')
+
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Encuestas')
+    expect(screen.getByRole('form')).toBeTruthy()
+    expect(screen.getByLabelText('Barrio')).toBeTruthy()
+    expect(screen.queryByText(/En construcción/)).toBeNull()
   })
 })
