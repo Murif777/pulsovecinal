@@ -62,7 +62,7 @@ function MapPinIcon({ className }: IconProps) {
   )
 }
 
-function BarChart3Icon({ className }: IconProps) {
+function LogInIcon({ className }: IconProps) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -74,10 +74,9 @@ function BarChart3Icon({ className }: IconProps) {
       className={className}
       aria-hidden="true"
     >
-      <path d="M3 3v18h18" />
-      <path d="M18 17V9" />
-      <path d="M13 17V5" />
-      <path d="M8 17v-3" />
+      <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+      <polyline points="10 17 15 12 10 7" />
+      <line x1="15" x2="3" y1="12" y2="12" />
     </svg>
   )
 }
@@ -93,7 +92,7 @@ const NAV_ITEMS: readonly NavItem[] = [
   { to: '/', label: 'Inicio', icon: HomeIcon, end: true },
   { to: '/encuesta', label: 'Encuestas', icon: ClipboardListIcon },
   { to: '/mapa', label: 'Mapa', icon: MapPinIcon },
-  { to: '/dashboard', label: 'Dashboard', icon: BarChart3Icon },
+  { to: '/login', label: 'Login', icon: LogInIcon },
 ]
 
 function navLinkClassName({ isActive }: { isActive: boolean }) {

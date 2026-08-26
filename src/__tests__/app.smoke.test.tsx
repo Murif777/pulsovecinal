@@ -34,14 +34,14 @@ describe('App', () => {
     expect(tagline.textContent).toBe('Toma el pulso a tu barrio')
   })
 
-  it('exposes links to the three feature routes', () => {
+  it('exposes links to the feature routes and login', () => {
     renderRoute('/')
 
     const hrefs = screen.getAllByRole('link').map((link) => link.getAttribute('href'))
 
     expect(hrefs).toContain('/encuesta')
     expect(hrefs).toContain('/mapa')
-    expect(hrefs).toContain('/dashboard')
+    expect(hrefs).toContain('/login')
   })
 
   it.each([

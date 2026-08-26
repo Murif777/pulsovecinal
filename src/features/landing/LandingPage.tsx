@@ -46,26 +46,6 @@ function MapPinIcon({ className }: IconProps) {
   )
 }
 
-function BarChartIcon({ className }: IconProps) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      aria-hidden="true"
-    >
-      <path d="M3 3v18h18" />
-      <path d="M18 17V9" />
-      <path d="M13 17V5" />
-      <path d="M8 17v-3" />
-    </svg>
-  )
-}
-
 function ArrowRightIcon({ className }: IconProps) {
   return (
     <svg
@@ -101,13 +81,6 @@ const FEATURES = [
     icon: MapPinIcon,
     accent: 'emerald' as const,
   },
-  {
-    to: '/dashboard',
-    title: 'Dashboard',
-    description: 'Descubre las prioridades con datos claros',
-    icon: BarChartIcon,
-    accent: 'amber' as const,
-  },
 ]
 
 const ACCENT_STYLES = {
@@ -120,11 +93,6 @@ const ACCENT_STYLES = {
     tile: 'bg-emerald-100 text-emerald-700 group-hover:bg-emerald-200',
     bar: 'from-emerald-400 to-emerald-600',
     link: 'text-emerald-700 group-hover:text-emerald-800',
-  },
-  amber: {
-    tile: 'bg-amber-100 text-amber-700 group-hover:bg-amber-200',
-    bar: 'from-amber-400 to-amber-600',
-    link: 'text-amber-700 group-hover:text-amber-800',
   },
 } as const
 
@@ -214,11 +182,11 @@ export default function LandingPage() {
             ¿Qué puedes hacer?
           </h2>
           <p className="mt-2 text-base text-slate-600">
-            Tres formas de participar y mejorar tu comunidad
+            Dos formas de participar y mejorar tu comunidad
           </p>
         </div>
 
-        <div className="mt-10 grid gap-6 md:grid-cols-3">
+        <div className="mt-10 grid gap-6 md:grid-cols-2">
           {FEATURES.map((feature) => {
             const accent = ACCENT_STYLES[feature.accent]
             const Icon = feature.icon
