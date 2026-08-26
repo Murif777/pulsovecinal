@@ -47,7 +47,6 @@ describe('App', () => {
   it.each([
     ['/encuesta', 'Encuestas', 'Encuestas'],
     ['/mapa', 'Mapa', 'Mapa interactivo'],
-    ['/dashboard', 'Dashboard', 'Dashboard'],
   ])('navigates to %s when its navbar link is clicked', (_path, linkLabel, expectedTitle) => {
     renderRoute('/')
 
@@ -58,12 +57,19 @@ describe('App', () => {
     expect(heading.textContent).toBe(expectedTitle)
   })
 
-  it.each(['/dashboard'])('shows the construction badge on %s', (path) => {
-    renderRoute(path)
+  it('redirects to /login when /dashboard is accessed without a session', () => {
+    renderRoute('/dashboard')
 
-    expect(screen.getByRole('heading', { level: 1 })).toBeTruthy()
-    expect(screen.getByText(/En construcción/)).toBeTruthy()
-    expect(screen.getByText(/Feature asignada/)).toBeTruthy()
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Iniciar sesión')
+  })
+
+  it('renders the login form at /login', () => {
+    renderRoute('/login')
+
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Iniciar sesión')
+    expect(screen.getByRole('form', { name: 'Iniciar sesión' })).toBeTruthy()
+    expect(screen.getByText('analista')).toBeTruthy()
+    expect(screen.getByText('pulso2026')).toBeTruthy()
   })
 
   it('renders the citizen survey form on /encuesta instead of the placeholder', () => {
