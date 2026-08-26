@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
-import { getMapReports } from '../../lib/mockData'
+import { getMapReports, mockSurveyResponses } from '../../lib/mockData'
+import { loadSurveyResponses } from '../../lib/surveyStorage'
 import type { ComplaintCategory, Severity } from '../../lib/types'
 import FilterBar from './FilterBar'
 import Legend from './Legend'
@@ -52,7 +53,14 @@ export default function MapaPage() {
   const [selectedSeverities, setSelectedSeverities] = useState<readonly Severity[]>([])
   const [selectedComunas, setSelectedComunas] = useState<readonly string[]>([])
 
-  const reports = useMemo(() => getMapReports(), [])
+  // Citizen registrations saved by /encuesta in this browser. Loaded once per
+  // mount: a page refresh picks up new registrations (no live subscription).
+  const citizenResponses = useMemo(() => loadSurveyResponses(), [])
+
+  const reports = useMemo(
+    () => getMapReports([...mockSurveyResponses, ...citizenResponses]),
+    [citizenResponses],
+  )
 
   const comunaOptions = useMemo(
     () => [...new Set(reports.map((report) => report.comuna))].sort((a, b) => a.localeCompare(b)),
