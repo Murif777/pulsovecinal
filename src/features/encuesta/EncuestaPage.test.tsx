@@ -54,7 +54,7 @@ describe('EncuestaPage', () => {
     expect(screen.getByText(/Aún no has enviado reportes/)).toBeTruthy()
   })
 
-  it('saves a valid report to localStorage and shows it in the list', () => {
+  it('saves a valid report to localStorage and shows a compact row in the list', () => {
     render(<EncuestaPage />)
 
     fillValidForm()
@@ -66,7 +66,8 @@ describe('EncuestaPage', () => {
     expect(within(list).getByText(/Comuna 2/)).toBeTruthy()
     expect(within(list).getByText(/Seguridad/)).toBeTruthy()
     expect(within(list).getByText(/Media/)).toBeTruthy()
-    expect(within(list).getByText('Falta alumbrado en el parque principal')).toBeTruthy()
+    expect(within(list).queryByText('Falta alumbrado en el parque principal')).toBeNull()
+    expect(screen.getByRole('button', { name: 'Ver detalles del reporte en La Esperanza' })).toBeTruthy()
 
     const stored = JSON.parse(window.localStorage.getItem(SURVEY_STORAGE_KEY) ?? '[]') as unknown[]
     expect(stored).toHaveLength(1)
@@ -93,8 +94,39 @@ describe('EncuestaPage', () => {
 
     render(<EncuestaPage />)
 
-    expect(screen.getByText('Falta alumbrado en el parque principal')).toBeTruthy()
+    expect(screen.queryByText('Falta alumbrado en el parque principal')).toBeNull()
     expect(within(screen.getByRole('list')).getByText('La Esperanza')).toBeTruthy()
     expect(screen.queryByText(/Aún no has enviado reportes/)).toBeNull()
+  })
+
+  it('opens a detail card from the eye button and closes it', () => {
+    render(<EncuestaPage />)
+
+    fillValidForm()
+    fireEvent.click(screen.getByRole('button', { name: 'Enviar reporte' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Ver detalles del reporte en La Esperanza' }))
+
+    const dialog = screen.getByRole('dialog', { name: 'Detalle del reporte' })
+    expect(within(dialog).getByText('Falta alumbrado en el parque principal')).toBeTruthy()
+    expect(within(dialog).getByText('La Esperanza')).toBeTruthy()
+    expect(within(dialog).getByText('Comuna 2')).toBeTruthy()
+    expect(within(dialog).getByText('Seguridad')).toBeTruthy()
+
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Cerrar' }))
+    expect(screen.queryByRole('dialog')).toBeNull()
+  })
+
+  it('keeps a long unbreakable description out of the list until details open', () => {
+    const longDescription = 'a'.repeat(80)
+    render(<EncuestaPage />)
+
+    fillValidForm()
+    fireEvent.change(screen.getByLabelText('Descripción'), { target: { value: longDescription } })
+    fireEvent.click(screen.getByRole('button', { name: 'Enviar reporte' }))
+
+    expect(within(screen.getByRole('list')).queryByText(longDescription)).toBeNull()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ver detalles del reporte en La Esperanza' }))
+    expect(within(screen.getByRole('dialog')).getByText(longDescription)).toBeTruthy()
   })
 })
