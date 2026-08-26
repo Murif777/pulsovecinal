@@ -77,11 +77,14 @@ docker run --rm -p 8080:80 miguecaramirez/pulsovecinal:latest
 
 Imagen: [miguecaramirez/pulsovecinal](https://hub.docker.com/r/miguecaramirez/pulsovecinal)
 
+Cada push a `main` reconstruye y publica esa imagen (`latest` y el SHA del commit) con GitHub Actions. Hay que definir en el repo los secrets `DOCKERHUB_USERNAME` y `DOCKERHUB_TOKEN` (Settings → Secrets and variables → Actions). El token se crea en Docker Hub: Account Settings → Personal access tokens.
+
 ## Estructura del proyecto
 
 ```
 pulsovecinal/
-├── .github/workflows/ci.yml       ← CI: lint + typecheck + build + test
+├── .github/workflows/ci.yml              ← CI: lint + typecheck + build + test
+├── .github/workflows/docker-publish.yml  ← push a main → imagen en Docker Hub
 ├── Dockerfile                     ← imagen multi-stage (Vite → nginx)
 ├── docker-compose.yml             ← `docker compose up --build` → :8080
 ├── nginx.conf                     ← SPA fallback + gzip
