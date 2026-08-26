@@ -26,10 +26,12 @@ const EMPTY_FORM = {
 }
 
 const fieldClassName =
-  'mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-teal-600 focus:outline-none focus:ring-1 focus:ring-teal-600'
+  'mt-1.5 block w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 transition focus:border-teal-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500/30'
 
 function errorClassName(hasError: boolean) {
-  return hasError ? `${fieldClassName} border-red-500 focus:border-red-600 focus:ring-red-600` : fieldClassName
+  return hasError
+    ? `${fieldClassName} border-red-400 bg-red-50 focus:border-red-500 focus:ring-red-500/30`
+    : fieldClassName
 }
 
 function validate(values: typeof EMPTY_FORM): FieldErrors {
@@ -47,6 +49,27 @@ function validate(values: typeof EMPTY_FORM): FieldErrors {
     errors.description = 'Describe el problema'
   }
   return errors
+}
+
+function FieldLabel({
+  htmlFor,
+  step,
+  children,
+}: {
+  htmlFor: string
+  step: string
+  children: string
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      <span aria-hidden="true" className="font-mono text-xs font-bold text-teal-600">
+        {step}
+      </span>
+      <label htmlFor={htmlFor} className="text-sm font-semibold text-slate-800">
+        {children}
+      </label>
+    </div>
+  )
 }
 
 /** Citizen survey form: barrio, category, urgency and description are all required. */
@@ -76,18 +99,20 @@ export default function SurveyForm({ onSubmitted }: SurveyFormProps) {
       onSubmit={handleSubmit}
       noValidate
       aria-labelledby="encuesta-heading"
-      className="min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-white p-6"
+      className="min-w-0 overflow-hidden rounded-2xl border border-teal-100 bg-white"
     >
-      <h2 className="text-lg font-semibold text-slate-900">Reportar una necesidad</h2>
-      <p className="mt-1 text-sm text-slate-600">
-        Completa los cuatro campos para registrar el problema de tu barrio.
-      </p>
+      <div className="bg-teal-600 px-6 py-5 text-white">
+        <h2 className="text-lg font-bold tracking-tight">Reportar una necesidad</h2>
+        <p className="mt-1 text-sm text-teal-50">
+          Completa los cuatro campos para registrar el problema de tu barrio.
+        </p>
+      </div>
 
-      <div className="mt-6 space-y-4">
+      <div className="space-y-5 p-6">
         <div>
-          <label htmlFor="survey-barrio" className="block text-sm font-medium text-slate-700">
+          <FieldLabel htmlFor="survey-barrio" step="01">
             Barrio
-          </label>
+          </FieldLabel>
           <select
             id="survey-barrio"
             name="barrio"
@@ -106,98 +131,100 @@ export default function SurveyForm({ onSubmitted }: SurveyFormProps) {
             ))}
           </select>
           {errors.barrio ? (
-            <p id="survey-barrio-error" role="alert" className="mt-1 text-sm text-red-700">
+            <p id="survey-barrio-error" role="alert" className="mt-1.5 text-sm text-red-700">
               {errors.barrio}
             </p>
           ) : null}
         </div>
 
-        <div>
-          <label htmlFor="survey-category" className="block text-sm font-medium text-slate-700">
-            Categoría
-          </label>
-          <select
-            id="survey-category"
-            name="category"
-            value={values.category}
-            aria-required="true"
-            aria-invalid={Boolean(errors.category)}
-            aria-describedby={errors.category ? 'survey-category-error' : undefined}
-            className={errorClassName(Boolean(errors.category))}
-            onChange={(event) => setValues((current) => ({ ...current, category: event.target.value }))}
-          >
-            <option value="">Selecciona una categoría</option>
-            {ALL_CATEGORIES.map((category) => (
-              <option key={category} value={category}>
-                {CATEGORY_LABELS[category]}
-              </option>
-            ))}
-          </select>
-          {errors.category ? (
-            <p id="survey-category-error" role="alert" className="mt-1 text-sm text-red-700">
-              {errors.category}
-            </p>
-          ) : null}
+        <div className="grid gap-5 sm:grid-cols-2">
+          <div>
+            <FieldLabel htmlFor="survey-category" step="02">
+              Categoría
+            </FieldLabel>
+            <select
+              id="survey-category"
+              name="category"
+              value={values.category}
+              aria-required="true"
+              aria-invalid={Boolean(errors.category)}
+              aria-describedby={errors.category ? 'survey-category-error' : undefined}
+              className={errorClassName(Boolean(errors.category))}
+              onChange={(event) => setValues((current) => ({ ...current, category: event.target.value }))}
+            >
+              <option value="">Selecciona una categoría</option>
+              {ALL_CATEGORIES.map((category) => (
+                <option key={category} value={category}>
+                  {CATEGORY_LABELS[category]}
+                </option>
+              ))}
+            </select>
+            {errors.category ? (
+              <p id="survey-category-error" role="alert" className="mt-1.5 text-sm text-red-700">
+                {errors.category}
+              </p>
+            ) : null}
+          </div>
+
+          <div>
+            <FieldLabel htmlFor="survey-severity" step="03">
+              Urgencia
+            </FieldLabel>
+            <select
+              id="survey-severity"
+              name="severity"
+              value={values.severity}
+              aria-required="true"
+              aria-invalid={Boolean(errors.severity)}
+              aria-describedby={errors.severity ? 'survey-severity-error' : undefined}
+              className={errorClassName(Boolean(errors.severity))}
+              onChange={(event) => setValues((current) => ({ ...current, severity: event.target.value }))}
+            >
+              <option value="">Selecciona un nivel de urgencia</option>
+              {ALL_SEVERITIES.map((severity) => (
+                <option key={severity} value={severity}>
+                  {SEVERITY_LABELS[severity]}
+                </option>
+              ))}
+            </select>
+            {errors.severity ? (
+              <p id="survey-severity-error" role="alert" className="mt-1.5 text-sm text-red-700">
+                {errors.severity}
+              </p>
+            ) : null}
+          </div>
         </div>
 
         <div>
-          <label htmlFor="survey-severity" className="block text-sm font-medium text-slate-700">
-            Urgencia
-          </label>
-          <select
-            id="survey-severity"
-            name="severity"
-            value={values.severity}
-            aria-required="true"
-            aria-invalid={Boolean(errors.severity)}
-            aria-describedby={errors.severity ? 'survey-severity-error' : undefined}
-            className={errorClassName(Boolean(errors.severity))}
-            onChange={(event) => setValues((current) => ({ ...current, severity: event.target.value }))}
-          >
-            <option value="">Selecciona un nivel de urgencia</option>
-            {ALL_SEVERITIES.map((severity) => (
-              <option key={severity} value={severity}>
-                {SEVERITY_LABELS[severity]}
-              </option>
-            ))}
-          </select>
-          {errors.severity ? (
-            <p id="survey-severity-error" role="alert" className="mt-1 text-sm text-red-700">
-              {errors.severity}
-            </p>
-          ) : null}
-        </div>
-
-        <div>
-          <label htmlFor="survey-description" className="block text-sm font-medium text-slate-700">
+          <FieldLabel htmlFor="survey-description" step="04">
             Descripción
-          </label>
+          </FieldLabel>
           <textarea
             id="survey-description"
             name="description"
-            rows={4}
+            rows={5}
             value={values.description}
             aria-required="true"
             aria-invalid={Boolean(errors.description)}
             aria-describedby={errors.description ? 'survey-description-error' : undefined}
-            className={`${errorClassName(Boolean(errors.description))} max-w-full break-all`}
+            className={`${errorClassName(Boolean(errors.description))} max-w-full resize-y break-all`}
             placeholder="Cuéntanos qué ocurre y dónde se presenta el problema."
             onChange={(event) => setValues((current) => ({ ...current, description: event.target.value }))}
           />
           {errors.description ? (
-            <p id="survey-description-error" role="alert" className="mt-1 text-sm text-red-700">
+            <p id="survey-description-error" role="alert" className="mt-1.5 text-sm text-red-700">
               {errors.description}
             </p>
           ) : null}
         </div>
-      </div>
 
-      <button
-        type="submit"
-        className="mt-6 inline-flex w-full items-center justify-center rounded-md bg-teal-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600 sm:w-auto"
-      >
-        Enviar reporte
-      </button>
+        <button
+          type="submit"
+          className="inline-flex w-full items-center justify-center rounded-xl bg-teal-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-teal-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600"
+        >
+          Enviar reporte
+        </button>
+      </div>
     </form>
   )
 }
