@@ -1,7 +1,7 @@
-import { CircleMarker, MapContainer, TileLayer } from 'react-leaflet'
+import { CircleMarker, MapContainer, Popup, TileLayer } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import { getMapReports } from '../../lib/mockData'
-import { aggregateByBarrio, radiusForCount, severityColor } from './mapUtils'
+import { aggregateByBarrio, breakdownByCategory, radiusForCount, severityColor } from './mapUtils'
 
 /** City center of Valledupar used as the initial map viewport. */
 const VALLEDUPAR_CENTER: [number, number] = [10.46, -73.25]
@@ -37,7 +37,22 @@ export default function MapaView() {
               fillOpacity: 0.7,
               weight: 1,
             }}
-          />
+          >
+            <Popup>
+              <div className="min-w-[180px] text-sm">
+                <p className="font-semibold text-slate-900">{marker.barrio}</p>
+                <p className="text-slate-500">{marker.comuna}</p>
+                <p className="mt-1 text-slate-700">Total: {marker.count} reportes</p>
+                <ul className="mt-1 space-y-0.5 text-slate-600">
+                  {breakdownByCategory(marker).map((entry) => (
+                    <li key={entry.category}>
+                      {entry.label}: {entry.count}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </Popup>
+          </CircleMarker>
         ))}
       </MapContainer>
     </div>
