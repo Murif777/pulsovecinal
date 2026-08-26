@@ -65,7 +65,8 @@ describe('applyFilters', () => {
 
 describe('activeFilterCount / chips', () => {
   it('counts each active group once', () => {
-    expect(activeFilterCount(base)).toBe(0)
+    // The citizen source is ON by default, so the base filters already count 1.
+    expect(activeFilterCount(base)).toBe(1)
     expect(
       activeFilterCount({
         ...base,
@@ -102,6 +103,12 @@ describe('activeFilterCount / chips', () => {
     expect(removeFilterChip(filters, 'comuna:Comuna 2').comunas).toEqual([])
     expect(removeFilterChip(filters, 'citizen').includeCitizen).toBe(false)
     expect(removeFilterChip(filters, 'period').from).toBeNull()
+  })
+})
+
+describe('EMPTY_FILTERS', () => {
+  it('includes citizen reports by default', () => {
+    expect(EMPTY_FILTERS.includeCitizen).toBe(true)
   })
 })
 

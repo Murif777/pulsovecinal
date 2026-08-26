@@ -123,7 +123,7 @@ describe('DashboardPage', () => {
     expect(within(kpiCard('Reportes totales')).getByText('3')).toBeTruthy()
   })
 
-  it('includes citizen reports when the source toggle is checked', () => {
+  it('includes citizen reports by default and hides them when the source toggle is unchecked', () => {
     window.localStorage.setItem(
       CITIZEN_STORAGE_KEY,
       JSON.stringify([
@@ -141,11 +141,12 @@ describe('DashboardPage', () => {
 
     renderDashboard()
 
-    expect(within(kpiCard('Reportes totales')).getByText('20')).toBeTruthy()
+    // includeCitizen defaults to true: the stored citizen report is already merged.
+    expect(within(kpiCard('Reportes totales')).getByText('21')).toBeTruthy()
 
     fireEvent.click(screen.getByRole('checkbox', { name: /Incluir reportes ciudadanos/ }))
 
-    expect(within(kpiCard('Reportes totales')).getByText('21')).toBeTruthy()
+    expect(within(kpiCard('Reportes totales')).getByText('20')).toBeTruthy()
   })
 
   it('shows the active session and logs out back to /login', () => {
