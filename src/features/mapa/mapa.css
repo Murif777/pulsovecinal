@@ -1,0 +1,45 @@
+/*
+ * Scoped Leaflet popup chrome overrides for the /mapa feature.
+ *
+ * The `pulso-popup` class is passed to react-leaflet's <Popup className>,
+ * which Leaflet 1.9 applies to the outer `.leaflet-popup` container, so every
+ * rule below stays inside the feature and never leaks to other popups.
+ */
+
+.pulso-popup .leaflet-popup-content-wrapper,
+.pulso-popup.leaflet-popup-content-wrapper {
+  border-radius: 0.75rem;
+  border: 1px solid #e2e8f0; /* slate-200 */
+  box-shadow:
+    0 12px 32px -8px rgb(15 23 42 / 0.25),
+    0 4px 12px -4px rgb(15 23 42 / 0.12);
+}
+
+.pulso-popup .leaflet-popup-content {
+  margin: 14px 16px;
+  line-height: 1.45;
+}
+
+.pulso-popup .leaflet-popup-tip {
+  box-shadow: 0 2px 6px rgb(15 23 42 / 0.18);
+}
+
+.pulso-popup .leaflet-popup-close-button {
+  top: 10px;
+  right: 10px;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  font-size: 16px;
+  line-height: 22px;
+  text-align: center;
+  color: #94a3b8; /* slate-400 */
+  transition:
+    background-color 150ms ease,
+    color 150ms ease;
+}
+
+.pulso-popup .leaflet-popup-close-button:hover {
+  background-color: #f1f5f9; /* slate-100 */
+  color: #334155; /* slate-700 */
+}
