@@ -22,6 +22,7 @@ PulsoVecinal es una plataforma de encuestas ciudadanas georreferenciadas para pr
 | Lint / tipos | ESLint 9 (typescript-eslint) + `tsc -b` |
 | Node | LTS 22 (`.nvmrc` + `engines`) |
 | CI | GitHub Actions: lint + typecheck + build + test |
+| Contenedor | Docker multi-stage: Node 22 (build) → nginx 1.27 |
 
 ## Cómo correr el proyecto localmente
 
@@ -49,11 +50,41 @@ Antes de cada commit se recomienda correr los cuatro checks:
 npm run lint && npm run typecheck && npm run build && npm run test
 ```
 
+## Cómo correr con Docker
+
+Requisito: **Docker Desktop** (motor en marcha).
+
+```bash
+docker compose up --build
+```
+
+La app queda en http://localhost:8080 (nginx sirve el build de Vite; las rutas de React Router caen en `index.html`).
+
+Equivalente sin Compose:
+
+```bash
+docker build -t pulsovecinal:local .
+docker run --rm -p 8080:80 pulsovecinal:local
+```
+
+Para detener Compose: `docker compose down`.
+
+Desde Docker Hub (sin clonar el repo):
+
+```bash
+docker run --rm -p 8080:80 miguecaramirez/pulsovecinal:latest
+```
+
+Imagen: [miguecaramirez/pulsovecinal](https://hub.docker.com/r/miguecaramirez/pulsovecinal)
+
 ## Estructura del proyecto
 
 ```
 pulsovecinal/
 ├── .github/workflows/ci.yml       ← CI: lint + typecheck + build + test
+├── Dockerfile                     ← imagen multi-stage (Vite → nginx)
+├── docker-compose.yml             ← `docker compose up --build` → :8080
+├── nginx.conf                     ← SPA fallback + gzip
 ├── src/
 │   ├── App.tsx                    ← router compartido (congelado tras S2)
 │   ├── components/
@@ -133,8 +164,8 @@ Para el Integrante A usa `feat/encuesta` y `src/features/encuesta/`; para el Int
   - [x] Formulario de encuesta conectado a la capa de datos (A).
   - [x] Mapa interactivo en `/mapa` (B): Leaflet + OpenStreetMap con un `CircleMarker` por barrio (radio ∝ reportes, color = semáforo de severidad), popups con desglose por categoría, filtros por categoría/severidad/comuna y leyenda.
   - [x] Dashboard con gráficas y ranking de criticidad (C): KPIs, ranking de barrios más críticos, distribución por categoría/severidad (recharts), filtro por comuna y login simulado en `/login` (demo académica — **no es seguridad real**).
-- [ ] **Fase 2 — Dockerización**: `Dockerfile` multi-stage (build Vite → nginx), imagen publicada en DockerHub.
-- [ ] **Fase 3 — Demo con Docker**: `docker run -p 8080:80 <usuario>/pulsovecinal` como demostración de despliegue.
+- [x] **Fase 2 — Dockerización**: `Dockerfile` multi-stage (build Vite → nginx), `docker compose up --build` e imagen en Docker Hub: `miguecaramirez/pulsovecinal`.
+- [x] **Fase 3 — Demo con Docker**: `docker run --rm -p 8080:80 miguecaramirez/pulsovecinal:latest`.
 - [ ] **Fase futura**: backend/API real y base de datos, reemplazando la capa mock.
 
 ## Licencia

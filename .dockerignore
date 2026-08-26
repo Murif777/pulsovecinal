@@ -1,0 +1,13 @@
+node_modules
+dist
+.git
+.github
+.cursor
+.vscode
+.idea
+coverage
+Contexto
+*.local
+.env
+.env.*
+npm-debug.log*
