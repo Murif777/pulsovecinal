@@ -6,7 +6,7 @@
 
 PulsoVecinal es una plataforma de encuestas ciudadanas georreferenciadas para priorizar las necesidades barriales de **Valledupar, Colombia**. Los habitantes reportan problemas de su barrio (seguridad, alcantarillado, energía, vías, espacios públicos), indican qué tan urgente es cada uno, y la plataforma concentra esa información en un mapa interactivo y un dashboard de criticidad para que la voz de la comunidad oriente las decisiones locales.
 
-> ⚠️ **Estado actual**: entrega base inicial (skeleton). Las tres features son páginas placeholder "En construcción"; los datos provienen de una capa mock (`src/lib/mockData.ts`). Sin backend ni base de datos todavía.
+> ⚠️ **Estado actual**: el mapa interactivo (`/mapa`) ya está implementado con Leaflet + OpenStreetMap; encuesta y dashboard siguen como páginas placeholder "En construcción". Los datos provienen de una capa mock (`src/lib/mockData.ts`). Sin backend ni base de datos todavía.
 
 ---
 
@@ -129,7 +129,10 @@ Para el Integrante A usa `feat/encuesta` y `src/features/encuesta/`; para el Int
 
 ## Roadmap
 
-- [ ] **Fase 1 — Features reales**: formulario de encuesta conectado a la capa de datos (A), mapa Leaflet con marcadores por barrio (B), dashboard con gráficas y ranking de criticidad (C).
+- [ ] **Fase 1 — Features reales**
+  - [ ] Formulario de encuesta conectado a la capa de datos (A).
+  - [x] Mapa interactivo en `/mapa` (B): Leaflet + OpenStreetMap con un `CircleMarker` por barrio (radio ∝ reportes, color = semáforo de severidad), popups con desglose por categoría, filtros por categoría/severidad/comuna y leyenda.
+  - [ ] Dashboard con gráficas y ranking de criticidad (C).
 - [ ] **Fase 2 — Dockerización**: `Dockerfile` multi-stage (build Vite → nginx), imagen publicada en DockerHub.
 - [ ] **Fase 3 — Demo con Docker**: `docker run -p 8080:80 <usuario>/pulsovecinal` como demostración de despliegue.
 - [ ] **Fase futura**: backend/API real y base de datos, reemplazando la capa mock.
