@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { getMapReports } from '../../lib/mockData'
 import type { ComplaintCategory, Severity } from '../../lib/types'
 import FilterBar from './FilterBar'
+import Legend from './Legend'
 import MapaView from './MapaView'
 import { aggregateByBarrio, filterReports } from './mapUtils'
 
@@ -13,8 +14,14 @@ import { aggregateByBarrio, filterReports } from './mapUtils'
 export default function MapaPage() {
   const [selectedCategories, setSelectedCategories] = useState<readonly ComplaintCategory[]>([])
   const [selectedSeverities, setSelectedSeverities] = useState<readonly Severity[]>([])
+  const [selectedComunas, setSelectedComunas] = useState<readonly string[]>([])
 
   const reports = useMemo(() => getMapReports(), [])
+
+  const comunaOptions = useMemo(
+    () => [...new Set(reports.map((report) => report.comuna))].sort((a, b) => a.localeCompare(b)),
+    [reports],
+  )
 
   const markers = useMemo(
     () =>
@@ -22,10 +29,10 @@ export default function MapaPage() {
         filterReports(reports, {
           categories: selectedCategories,
           severities: selectedSeverities,
-          comunas: [],
+          comunas: selectedComunas,
         }),
       ),
-    [reports, selectedCategories, selectedSeverities],
+    [reports, selectedCategories, selectedSeverities, selectedComunas],
   )
 
   const toggleCategory = (category: ComplaintCategory) => {
@@ -40,9 +47,16 @@ export default function MapaPage() {
     )
   }
 
+  const toggleComuna = (comuna: string) => {
+    setSelectedComunas((prev) =>
+      prev.includes(comuna) ? prev.filter((item) => item !== comuna) : [...prev, comuna],
+    )
+  }
+
   const clearFilters = () => {
     setSelectedCategories([])
     setSelectedSeverities([])
+    setSelectedComunas([])
   }
 
   return (
@@ -55,13 +69,17 @@ export default function MapaPage() {
         <FilterBar
           selectedCategories={selectedCategories}
           selectedSeverities={selectedSeverities}
+          selectedComunas={selectedComunas}
+          comunaOptions={comunaOptions}
           onToggleCategory={toggleCategory}
           onToggleSeverity={toggleSeverity}
+          onToggleComuna={toggleComuna}
           onClearFilters={clearFilters}
         />
       </div>
-      <div className="mt-4">
+      <div className="relative mt-4">
         <MapaView markers={markers} />
+        <Legend />
       </div>
     </section>
   )

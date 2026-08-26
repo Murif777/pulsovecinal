@@ -54,23 +54,32 @@ function FilterGroup({ title, children }: FilterGroupProps) {
 type FilterBarProps = {
   selectedCategories: readonly ComplaintCategory[]
   selectedSeverities: readonly Severity[]
+  selectedComunas: readonly string[]
+  /** Comuna values available in the dataset, rendered as chips. */
+  comunaOptions: readonly string[]
   onToggleCategory: (category: ComplaintCategory) => void
   onToggleSeverity: (severity: Severity) => void
+  onToggleComuna: (comuna: string) => void
   onClearFilters: () => void
 }
 
 /**
- * Presentational filter bar above the map: category and severity chips plus a
- * "Limpiar filtros" button that only shows up while any filter is active.
+ * Presentational filter bar above the map: category, severity and comuna
+ * chips plus a "Limpiar filtros" button that only shows up while any filter
+ * is active.
  */
 export default function FilterBar({
   selectedCategories,
   selectedSeverities,
+  selectedComunas,
+  comunaOptions,
   onToggleCategory,
   onToggleSeverity,
+  onToggleComuna,
   onClearFilters,
 }: FilterBarProps) {
-  const hasActiveFilters = selectedCategories.length > 0 || selectedSeverities.length > 0
+  const hasActiveFilters =
+    selectedCategories.length > 0 || selectedSeverities.length > 0 || selectedComunas.length > 0
 
   return (
     <div className="sticky top-16 z-20 space-y-3 rounded-xl border border-slate-200 bg-white/95 p-4 shadow-sm backdrop-blur">
@@ -91,6 +100,16 @@ export default function FilterBar({
             label={SEVERITY_CHIP_LABELS[severity]}
             active={selectedSeverities.includes(severity)}
             onClick={() => onToggleSeverity(severity)}
+          />
+        ))}
+      </FilterGroup>
+      <FilterGroup title="Comuna">
+        {comunaOptions.map((comuna) => (
+          <Chip
+            key={comuna}
+            label={comuna}
+            active={selectedComunas.includes(comuna)}
+            onClick={() => onToggleComuna(comuna)}
           />
         ))}
       </FilterGroup>
