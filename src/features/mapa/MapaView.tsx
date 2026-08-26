@@ -1,7 +1,8 @@
 import { CircleMarker, MapContainer, Popup, TileLayer } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import type { BarrioMarker } from './mapUtils'
-import { breakdownByCategory, radiusForCount, severityColor } from './mapUtils'
+import { breakdownByCategory, CATEGORY_ICONS, radiusForCount, severityColor } from './mapUtils'
+import './mapa.css'
 
 /** City center of Valledupar used as the initial map viewport. */
 const VALLEDUPAR_CENTER: [number, number] = [10.46, -73.25]
@@ -25,7 +26,7 @@ export default function MapaView({ markers }: MapaViewProps) {
   const maxCount = counts.length > 0 ? Math.max(...counts) : 0
 
   return (
-    <div className="h-[520px] w-full overflow-hidden rounded-xl border border-slate-200 shadow">
+    <div className="h-[520px] w-full overflow-hidden rounded-2xl border border-slate-200 shadow-lg shadow-slate-900/5 ring-1 ring-slate-100 sm:h-[560px]">
       <MapContainer center={VALLEDUPAR_CENTER} zoom={12} className="h-full w-full">
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -43,15 +44,26 @@ export default function MapaView({ markers }: MapaViewProps) {
               weight: 1,
             }}
           >
-            <Popup>
-              <div className="min-w-[180px] text-sm">
-                <p className="font-semibold text-slate-900">{marker.barrio}</p>
-                <p className="text-slate-500">{marker.comuna}</p>
-                <p className="mt-1 text-slate-700">Total: {marker.count} reportes</p>
-                <ul className="mt-1 space-y-0.5 text-slate-600">
+            <Popup className="pulso-popup">
+              <div className="min-w-[200px]">
+                <p className="text-base font-bold leading-tight text-slate-900">{marker.barrio}</p>
+                <p className="mt-0.5 text-xs font-medium uppercase tracking-wide text-slate-500">
+                  {marker.comuna}
+                </p>
+                <p className="mt-2 rounded-lg bg-teal-50 px-2.5 py-1.5 text-sm font-semibold text-teal-800">
+                  Total: {marker.count} {marker.count === 1 ? 'reporte' : 'reportes'}
+                </p>
+                <ul className="mt-2 space-y-1">
                   {breakdownByCategory(marker).map((entry) => (
-                    <li key={entry.category}>
-                      {entry.label}: {entry.count}
+                    <li
+                      key={entry.category}
+                      className="flex items-center justify-between gap-3 text-sm text-slate-600"
+                    >
+                      <span className="flex items-center gap-1.5">
+                        <span aria-hidden="true">{CATEGORY_ICONS[entry.category]}</span>
+                        {entry.label}
+                      </span>
+                      <span className="font-semibold tabular-nums text-slate-800">{entry.count}</span>
                     </li>
                   ))}
                 </ul>

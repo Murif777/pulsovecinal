@@ -142,6 +142,31 @@ export default function MapaPage() {
       <div className="relative mt-4">
         <MapaView markers={markers} />
         <Legend />
+        {markers.length === 0 && (
+          <div
+            role="status"
+            className="absolute inset-0 z-[1100] flex items-center justify-center p-6"
+          >
+            <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white/95 p-6 text-center shadow-xl shadow-slate-900/10 backdrop-blur">
+              <span aria-hidden="true" className="text-4xl">
+                🤔
+              </span>
+              <h2 className="mt-3 text-lg font-bold text-slate-900">
+                No hay barrios con esos filtros
+              </h2>
+              <p className="mt-1 text-sm leading-6 text-slate-500">
+                Prueba con otra combinación de categorías, severidades o comunas.
+              </p>
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-teal-700 px-4 py-2 text-sm font-semibold text-white transition-colors duration-150 hover:bg-teal-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600"
+              >
+                Limpiar filtros
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </section>
   )
