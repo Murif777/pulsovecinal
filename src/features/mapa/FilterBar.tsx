@@ -11,105 +11,142 @@ const SEVERITY_CHIP_LABELS: Readonly<Record<Severity, string>> = {
   critica: 'Crítica',
 }
 
-/** Visual skin of a chip: soft translucent tints of its own color family. */
+/**
+ * Visual skin of a chip: quiet by default, its color family appears only on
+ * hover or selection (bottom-border accent plus a soft translucent wash).
+ */
 type ChipSkin = {
-  /** Classes while inactive (10% tint, hover deepens to 15%). */
-  inactive: string
-  /** Classes while active (20% tint, bolder text, inset ring at 30%). */
+  /** Neutral idle classes (slate bottom border, transparent background). */
+  idle: string
+  /** Classes that awaken the chip's color while hovered. */
+  hover: string
+  /** Classes while selected via aria-pressed=true. */
   active: string
   /** Focus ring color matching the chip's family. */
   focus: string
 }
 
+/** Builds the three color states of a chip from its Tailwind color name. */
 /**
- * Per-category skins: each complaint type keeps its color personality as a
- * translucent wash instead of a solid fill (all pairings keep AA contrast).
+ * One skin per Tailwind color family. Every class is a complete literal:
+ * Tailwind's JIT only detects whole class names in the source, so these
+ * must never be built dynamically.
  */
-const CATEGORY_CHIP_SKINS: Readonly<Record<ComplaintCategory, ChipSkin>> = {
-  seguridad: {
-    inactive: 'bg-rose-500/10 text-rose-700 hover:bg-rose-500/15',
-    active: 'bg-rose-500/20 font-semibold text-rose-800 ring-1 ring-inset ring-rose-500/30',
+const CHIP_SKINS = {
+  rose: {
+    idle: 'border-slate-300 bg-transparent text-slate-600',
+    hover: 'hover:border-rose-500 hover:bg-rose-500/10 hover:text-rose-700',
+    active: 'border-rose-500 bg-rose-500/10 font-semibold text-rose-700',
     focus: 'focus-visible:outline-rose-600',
   },
-  alcantarillado: {
-    inactive: 'bg-blue-500/10 text-blue-700 hover:bg-blue-500/15',
-    active: 'bg-blue-500/20 font-semibold text-blue-800 ring-1 ring-inset ring-blue-500/30',
+  blue: {
+    idle: 'border-slate-300 bg-transparent text-slate-600',
+    hover: 'hover:border-blue-500 hover:bg-blue-500/10 hover:text-blue-700',
+    active: 'border-blue-500 bg-blue-500/10 font-semibold text-blue-700',
     focus: 'focus-visible:outline-blue-600',
   },
-  energia: {
-    inactive: 'bg-amber-500/10 text-amber-700 hover:bg-amber-500/15',
-    active: 'bg-amber-500/20 font-semibold text-amber-800 ring-1 ring-inset ring-amber-500/30',
+  amber: {
+    idle: 'border-slate-300 bg-transparent text-slate-600',
+    hover: 'hover:border-amber-500 hover:bg-amber-500/10 hover:text-amber-700',
+    active: 'border-amber-500 bg-amber-500/10 font-semibold text-amber-700',
     focus: 'focus-visible:outline-amber-600',
   },
-  vias: {
-    inactive: 'bg-slate-500/10 text-slate-700 hover:bg-slate-500/15',
-    active: 'bg-slate-500/20 font-semibold text-slate-800 ring-1 ring-inset ring-slate-500/30',
+  slate: {
+    idle: 'border-slate-300 bg-transparent text-slate-600',
+    hover: 'hover:border-slate-500 hover:bg-slate-500/10 hover:text-slate-700',
+    active: 'border-slate-500 bg-slate-500/10 font-semibold text-slate-700',
     focus: 'focus-visible:outline-slate-600',
   },
-  espacios_publicos: {
-    inactive: 'bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/15',
-    active: 'bg-emerald-500/20 font-semibold text-emerald-800 ring-1 ring-inset ring-emerald-500/30',
+  emerald: {
+    idle: 'border-slate-300 bg-transparent text-slate-600',
+    hover: 'hover:border-emerald-500 hover:bg-emerald-500/10 hover:text-emerald-700',
+    active: 'border-emerald-500 bg-emerald-500/10 font-semibold text-emerald-700',
     focus: 'focus-visible:outline-emerald-600',
   },
-  otros: {
-    inactive: 'bg-violet-500/10 text-violet-700 hover:bg-violet-500/15',
-    active: 'bg-violet-500/20 font-semibold text-violet-800 ring-1 ring-inset ring-violet-500/30',
+  violet: {
+    idle: 'border-slate-300 bg-transparent text-slate-600',
+    hover: 'hover:border-violet-500 hover:bg-violet-500/10 hover:text-violet-700',
+    active: 'border-violet-500 bg-violet-500/10 font-semibold text-violet-700',
     focus: 'focus-visible:outline-violet-600',
   },
+  green: {
+    idle: 'border-slate-300 bg-transparent text-slate-600',
+    hover: 'hover:border-green-500 hover:bg-green-500/10 hover:text-green-700',
+    active: 'border-green-500 bg-green-500/10 font-semibold text-green-700',
+    focus: 'focus-visible:outline-green-600',
+  },
+  yellow: {
+    idle: 'border-slate-300 bg-transparent text-slate-600',
+    hover: 'hover:border-yellow-500 hover:bg-yellow-500/10 hover:text-yellow-700',
+    active: 'border-yellow-500 bg-yellow-500/10 font-semibold text-yellow-700',
+    focus: 'focus-visible:outline-yellow-600',
+  },
+  orange: {
+    idle: 'border-slate-300 bg-transparent text-slate-600',
+    hover: 'hover:border-orange-500 hover:bg-orange-500/10 hover:text-orange-700',
+    active: 'border-orange-500 bg-orange-500/10 font-semibold text-orange-700',
+    focus: 'focus-visible:outline-orange-600',
+  },
+  red: {
+    idle: 'border-slate-300 bg-transparent text-slate-600',
+    hover: 'hover:border-red-500 hover:bg-red-500/10 hover:text-red-700',
+    active: 'border-red-500 bg-red-500/10 font-semibold text-red-700',
+    focus: 'focus-visible:outline-red-600',
+  },
+  teal: {
+    idle: 'border-slate-300 bg-transparent text-slate-600',
+    hover: 'hover:border-teal-500 hover:bg-teal-500/10 hover:text-teal-700',
+    active: 'border-teal-500 bg-teal-500/10 font-semibold text-teal-700',
+    focus: 'focus-visible:outline-teal-600',
+  },
+} as const satisfies Readonly<Record<string, ChipSkin>>
+
+/** Per-category skins: each complaint type awakens its own color personality. */
+const CATEGORY_CHIP_SKINS: Readonly<Record<ComplaintCategory, ChipSkin>> = {
+  seguridad: CHIP_SKINS.rose,
+  alcantarillado: CHIP_SKINS.blue,
+  energia: CHIP_SKINS.amber,
+  vias: CHIP_SKINS.slate,
+  espacios_publicos: CHIP_SKINS.emerald,
+  otros: CHIP_SKINS.violet,
 }
 
 /** Traffic-light skins for severities, mirroring the marker colors. */
 const SEVERITY_CHIP_SKINS: Readonly<Record<Severity, ChipSkin>> = {
-  baja: {
-    inactive: 'bg-green-500/10 text-green-700 hover:bg-green-500/15',
-    active: 'bg-green-500/20 font-semibold text-green-800 ring-1 ring-inset ring-green-500/30',
-    focus: 'focus-visible:outline-green-600',
-  },
-  media: {
-    inactive: 'bg-yellow-500/10 text-yellow-700 hover:bg-yellow-500/15',
-    active: 'bg-yellow-500/20 font-semibold text-yellow-800 ring-1 ring-inset ring-yellow-500/30',
-    focus: 'focus-visible:outline-yellow-600',
-  },
-  alta: {
-    inactive: 'bg-orange-500/10 text-orange-700 hover:bg-orange-500/15',
-    active: 'bg-orange-500/20 font-semibold text-orange-800 ring-1 ring-inset ring-orange-500/30',
-    focus: 'focus-visible:outline-orange-600',
-  },
-  critica: {
-    inactive: 'bg-red-500/10 text-red-700 hover:bg-red-500/15',
-    active: 'bg-red-500/20 font-semibold text-red-800 ring-1 ring-inset ring-red-500/30',
-    focus: 'focus-visible:outline-red-600',
-  },
+  baja: CHIP_SKINS.green,
+  media: CHIP_SKINS.yellow,
+  alta: CHIP_SKINS.orange,
+  critica: CHIP_SKINS.red,
 }
 
 /** Brand-colored skin for comuna chips. */
-const COMUNA_CHIP_SKIN: ChipSkin = {
-  inactive: 'bg-teal-500/10 text-teal-700 hover:bg-teal-500/15',
-  active: 'bg-teal-500/20 font-semibold text-teal-800 ring-1 ring-inset ring-teal-500/30',
-  focus: 'focus-visible:outline-teal-600',
-}
+const COMUNA_CHIP_SKIN: ChipSkin = CHIP_SKINS.teal
 
 const CHIP_BASE =
-  'inline-flex cursor-pointer select-none items-center gap-1.5 rounded-md px-2.5 py-1 text-sm font-medium transition-colors duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2'
+  'inline-flex cursor-pointer select-none items-center gap-1.5 rounded-none border-b-2 px-2 py-0.5 text-sm font-normal transition-colors duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2'
 
 type ChipProps = {
   label: string
   active: boolean
   onClick: () => void
-  /** Color personality of the chip (tints, ring and focus color). */
+  /** Color personality of the chip (idle/hover/selected states). */
   skin: ChipSkin
   /** Decorative glyph shown before the label; hidden from the a11y tree. */
   icon?: ReactNode
 }
 
-/** Toggleable link-style filter chip exposing its state through aria-pressed. */
+/**
+ * Toggleable underline-style filter chip exposing its state through
+ * aria-pressed: neutral until hovered or chosen, colored afterwards.
+ */
 function Chip({ label, active, onClick, skin, icon }: ChipProps) {
+  const stateClasses = active ? skin.active : `${skin.idle} ${skin.hover}`
   return (
     <button
       type="button"
       aria-pressed={active}
       onClick={onClick}
-      className={`${CHIP_BASE} ${skin.focus} ${active ? skin.active : skin.inactive}`}
+      className={`${CHIP_BASE} ${skin.focus} ${stateClasses}`}
     >
       {icon}
       {label}
