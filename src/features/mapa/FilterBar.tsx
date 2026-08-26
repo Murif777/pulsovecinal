@@ -202,7 +202,7 @@ export default function FilterBar({
     selectedCategories.length > 0 || selectedSeverities.length > 0 || selectedComunas.length > 0
 
   return (
-    <div className="sticky top-16 z-20 flex flex-wrap items-center gap-x-5 gap-y-2 rounded-lg bg-white/60 px-3 py-2.5 backdrop-blur-sm">
+    <div className="lg:sticky lg:top-16 z-30 flex flex-wrap items-center gap-x-5 gap-y-2 rounded-lg bg-white/95 px-3 py-2.5 backdrop-blur-sm">
       <FilterGroup title="Categoría">
         {ALL_CATEGORIES.map((category) => (
           <Chip
