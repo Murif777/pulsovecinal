@@ -1,9 +1,10 @@
 import { useMemo } from 'react'
 import type { ReactNode } from 'react'
-import { getDashboardSummary } from '../../lib/mockData'
+import { getDashboardSummary, getMapReports } from '../../lib/mockData'
 import { CATEGORY_LABELS } from '../../lib/types'
 import KpiCard from './components/KpiCard'
-import { computeKpis } from './dashboardUtils'
+import RankingTable from './components/RankingTable'
+import { buildRanking, computeKpis } from './dashboardUtils'
 
 /** Decorative heartbeat glyph for the page eyebrow (the PulsoVecinal mark). */
 function PulseMark() {
@@ -49,6 +50,8 @@ function SummaryBadge({ icon, children }: SummaryBadgeProps) {
 export default function DashboardPage() {
   const summary = useMemo(() => getDashboardSummary(), [])
   const kpis = useMemo(() => computeKpis(summary), [summary])
+  const reports = useMemo(() => getMapReports(), [])
+  const ranking = useMemo(() => buildRanking(summary, reports), [summary, reports])
 
   return (
     <section className="mx-auto w-full max-w-6xl px-4 pb-16 pt-10 sm:px-6">
@@ -79,6 +82,16 @@ export default function DashboardPage() {
           value={`${CATEGORY_LABELS[kpis.topCategory]} (${kpis.topCategoryCount})`}
         />
         <KpiCard icon="🚨" label="Reportes críticos" value={String(kpis.criticalCount)} tone="red" />
+      </div>
+
+      <div className="mt-8">
+        <h2 className="text-lg font-bold text-slate-900">Barrios más críticos</h2>
+        <p className="mt-1 text-sm text-slate-500">
+          Ranking por score ponderado según la severidad de los reportes.
+        </p>
+        <div className="mt-3">
+          <RankingTable rows={ranking} />
+        </div>
       </div>
     </section>
   )
