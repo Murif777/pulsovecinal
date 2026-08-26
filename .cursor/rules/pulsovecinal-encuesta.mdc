@@ -1,0 +1,25 @@
+---
+description: Contexto, Trunk-Based y alcance de la feature Encuestas (Integrante A)
+alwaysApply: true
+---
+
+# PulsoVecinal — Encuestas
+
+SPA académica **sin DB** (Vite + React + TS). Producto: encuestas georreferenciadas para barrios de Valledupar (visión VozBarrio). Docker, backend, PWA, roles, fotos y PDF **no** entran en esta entrega.
+
+## Trunk-Based
+
+- Rama corta `feat/encuesta` desde `main`; PR + squash merge; CI en verde.
+- Tocar solo `src/features/encuesta/`, salvo el smoke test compartido cuando `/encuesta` deje de ser placeholder.
+- `App.tsx`, `components/` y `lib/` son append-only. No mutar `types.ts` ni `mockData.ts`.
+
+## Feature `/encuesta`
+
+- Usuario: ciudadano virtual. Obligatorios: barrio, categoría, urgencia, descripción (trim no vacío).
+- Persistir en `localStorage` (`pulsovecinal.surveyResponses`) y listar **solo** en `/encuesta`.
+- No alimentar mapa/dashboard (siguen el mock). Sin campo `encuestador`.
+- UI en español; identificadores y archivos en inglés. El `h1` de la ruta es **Encuestas**.
+
+## Fuera de alcance
+
+Backend, Docker, PWA/offline, roles, encuestas personalizables, fotos, PDF/Excel, Leaflet, charts, cambiar el mock compartido.
