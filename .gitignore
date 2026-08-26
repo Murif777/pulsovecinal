@@ -25,6 +25,7 @@ coverage
 .codegraph/
 .omo/
 .murif/
+.cursor/
 
 # Editor directories and files
 .vscode/*
