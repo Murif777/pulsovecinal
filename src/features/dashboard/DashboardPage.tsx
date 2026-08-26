@@ -2,9 +2,11 @@ import { useMemo } from 'react'
 import type { ReactNode } from 'react'
 import { getDashboardSummary, getMapReports } from '../../lib/mockData'
 import { CATEGORY_LABELS } from '../../lib/types'
+import CategoryChart from './components/CategoryChart'
 import KpiCard from './components/KpiCard'
 import RankingTable from './components/RankingTable'
-import { buildRanking, computeKpis } from './dashboardUtils'
+import SeverityChart from './components/SeverityChart'
+import { buildRanking, categoryDistribution, computeKpis, severityDistribution } from './dashboardUtils'
 
 /** Decorative heartbeat glyph for the page eyebrow (the PulsoVecinal mark). */
 function PulseMark() {
@@ -52,6 +54,8 @@ export default function DashboardPage() {
   const kpis = useMemo(() => computeKpis(summary), [summary])
   const reports = useMemo(() => getMapReports(), [])
   const ranking = useMemo(() => buildRanking(summary, reports), [summary, reports])
+  const categoryData = useMemo(() => categoryDistribution(summary), [summary])
+  const severityData = useMemo(() => severityDistribution(summary), [summary])
 
   return (
     <section className="mx-auto w-full max-w-6xl px-4 pb-16 pt-10 sm:px-6">
@@ -82,6 +86,23 @@ export default function DashboardPage() {
           value={`${CATEGORY_LABELS[kpis.topCategory]} (${kpis.topCategoryCount})`}
         />
         <KpiCard icon="🚨" label="Reportes críticos" value={String(kpis.criticalCount)} tone="red" />
+      </div>
+
+      <div className="mt-8 grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 className="text-base font-bold text-slate-900">Distribución por categoría</h2>
+          <p className="mt-1 text-sm text-slate-500">Reportes por categoría de problema.</p>
+          <div className="mt-4">
+            <CategoryChart data={categoryData} />
+          </div>
+        </div>
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 className="text-base font-bold text-slate-900">Distribución por severidad</h2>
+          <p className="mt-1 text-sm text-slate-500">Urgencia de los reportes ciudadanos.</p>
+          <div className="mt-4">
+            <SeverityChart data={severityData} />
+          </div>
+        </div>
       </div>
 
       <div className="mt-8">
