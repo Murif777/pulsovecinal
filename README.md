@@ -6,7 +6,7 @@
 
 PulsoVecinal es una plataforma de encuestas ciudadanas georreferenciadas para priorizar las necesidades barriales de **Valledupar, Colombia**. Los habitantes reportan problemas de su barrio (seguridad, alcantarillado, energía, vías, espacios públicos), indican qué tan urgente es cada uno, y la plataforma concentra esa información en un mapa interactivo y un dashboard de criticidad para que la voz de la comunidad oriente las decisiones locales.
 
-> ⚠️ **Estado actual**: el mapa interactivo (`/mapa`) ya está implementado con Leaflet + OpenStreetMap, el formulario de encuestas (`/encuesta`) está conectado a la capa de datos y el dashboard de criticidad (`/dashboard`) ya muestra KPIs, ranking de barrios, gráficas y filtro por comuna, protegido por un login de demostración (`/login`). Los datos provienen de una capa mock (`src/lib/mockData.ts`). Sin backend ni base de datos todavía.
+> ⚠️ **Estado actual**: el mapa interactivo (`/mapa`) ya está implementado con Leaflet + OpenStreetMap, el formulario de encuestas (`/encuesta`) está conectado a la capa de datos y el dashboard de criticidad (`/dashboard`) ya muestra KPIs, ranking de barrios, gráficas y filtro por comuna, protegido por un login de demostración (`/login`). Los datos provienen de una capa mock (`src/lib/mockData.ts`) más los reportes ciudadanos guardados en `localStorage` desde `/encuesta`, que el mapa y el dashboard integran automáticamente (el dashboard los incluye por defecto). Sin backend ni base de datos todavía.
 
 ---
 
@@ -98,10 +98,32 @@ pulsovecinal/
 │   ├── lib/
 │   │   ├── types.ts               ← contratos TS compartidos
 │   │   ├── mockData.ts            ← datos mock de Valledupar + agregadores
+│   │   ├── surveyStorage.ts       ← persistencia localStorage de encuestas (compartido)
 │   │   └── __tests__/             ← tests unitarios de la capa de datos
 │   └── __tests__/                 ← smoke tests de rutas
 └── index.html
 ```
+
+## Flujo de datos
+
+Sin backend todavía, los datos viven en dos capas del navegador:
+
+1. **Dataset mock** (`src/lib/mockData.ts`): 20 respuestas de referencia de Valledupar, la base con la que arrancan el mapa y el dashboard.
+2. **Reportes ciudadanos** (`localStorage`): cada envío del formulario `/encuesta` se persiste en la clave `pulsovecinal.surveyResponses` a través de `src/lib/surveyStorage.ts`, el módulo compartido de persistencia (validación de payloads corruptos + derivación de comuna). `/encuesta` escribe; `/mapa` y `/dashboard` leen.
+
+```
+/encuesta (formulario)
+   │  appendSurveyResponse() → localStorage['pulsovecinal.surveyResponses']
+   ▼
+src/lib/surveyStorage.ts   ← fuente única de persistencia
+   │
+   ├──► /mapa      getMapReports([...mock, ...ciudadanos]) → marcadores extra
+   └──► /dashboard mergeResponses(mock, includeCitizen)    → KPIs / ranking / gráficas
+```
+
+- El **mapa** fusiona los reportes ciudadanos con el dataset mock al montar la página; un refresh recoge los nuevos registros.
+- El **dashboard** incluye los reportes ciudadanos **por defecto** (`EMPTY_FILTERS.includeCitizen = true`); el toggle "Incluir reportes ciudadanos" del panel solo los oculta.
+- `src/features/encuesta/storage.ts` es un shim que re-exporta `src/lib/surveyStorage.ts` para mantener intacta la superficie pública de la feature.
 
 **Convención de idioma**: la UI está en español; identificadores, comentarios y nombres de archivo en inglés.
 
