@@ -1,6 +1,10 @@
 import { fireEvent, render, screen, within } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import DashboardPage from '../DashboardPage'
+import { DEMO_CREDENTIALS, getSession, login } from '../auth'
+import { CITIZEN_STORAGE_KEY } from '../citizenReports'
+import { installMemoryLocalStorage } from './memoryLocalStorage'
 
 // jsdom cannot measure real sizes (ResponsiveContainer uses ResizeObserver),
 // so recharts is replaced with functional stubs (the async factory avoids the
@@ -20,6 +24,8 @@ vi.mock('recharts', async () => {
     Pie: () => null,
     Cell: () => null,
     Legend: () => null,
+    AreaChart: ({ children }: { children?: React.ReactNode }) => React.createElement('div', null, children),
+    Area: () => null,
   }
 })
 
@@ -33,9 +39,29 @@ function kpiCard(label: string): HTMLElement {
   return card as HTMLElement
 }
 
+function viewGroup(): HTMLElement {
+  return screen.getByRole('group', { name: 'Vista del dashboard' })
+}
+
+function renderDashboard() {
+  return render(
+    <MemoryRouter initialEntries={['/dashboard']}>
+      <Routes>
+        <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/login" element={<div>Iniciar sesión</div>} />
+      </Routes>
+    </MemoryRouter>,
+  )
+}
+
+beforeEach(() => {
+  installMemoryLocalStorage()
+  login(DEMO_CREDENTIALS.username, DEMO_CREDENTIALS.password)
+})
+
 describe('DashboardPage', () => {
   it('renders the four KPI cards with the full dataset values (20, 15, Energía eléctrica, 2)', () => {
-    render(<DashboardPage />)
+    renderDashboard()
 
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Dashboard de criticidad')
     expect(within(kpiCard('Reportes totales')).getByText('20')).toBeTruthy()
@@ -45,7 +71,7 @@ describe('DashboardPage', () => {
   })
 
   it('renders the ranking table with La Esperanza in the first row', () => {
-    render(<DashboardPage />)
+    renderDashboard()
 
     const table = screen.getByRole('table')
     const rows = within(table).getAllByRole('row')
@@ -57,19 +83,81 @@ describe('DashboardPage', () => {
     expect(within(firstRow).getByText('7')).toBeTruthy()
   })
 
-  it('renders both chart containers (mocked recharts)', () => {
-    render(<DashboardPage />)
+  it('renders the three chart containers (mocked recharts)', () => {
+    renderDashboard()
 
-    expect(screen.getAllByTestId('chart-container')).toHaveLength(2)
+    expect(screen.getAllByTestId('chart-container')).toHaveLength(3)
   })
 
   it('re-derives KPIs and ranking when a comuna chip is selected', () => {
-    render(<DashboardPage />)
+    renderDashboard()
 
     fireEvent.click(screen.getByRole('button', { name: 'Comuna 2' }))
 
     expect(within(kpiCard('Reportes totales')).getByText('5')).toBeTruthy()
     expect(within(kpiCard('Barrios cubiertos')).getByText('3')).toBeTruthy()
     expect(screen.getByText('Comuna activa: Comuna 2')).toBeTruthy()
+  })
+
+  it('opens a specific report detail from the reportes view', () => {
+    renderDashboard()
+
+    fireEvent.click(within(viewGroup()).getByRole('button', { name: 'Reportes' }))
+
+    expect(screen.getByRole('heading', { level: 2, name: 'Reportes específicos' })).toBeTruthy()
+    expect(screen.getByText('Selecciona un reporte de la tabla para ver su descripción completa.')).toBeTruthy()
+
+    fireEvent.click(screen.getByText('Novalito'))
+
+    expect(screen.getByText('Ruido constante de talleres mecánicos residenciales')).toBeTruthy()
+    expect(screen.getByText('Diego Molina')).toBeTruthy()
+  })
+
+  it('drills down from the ranking into the reports of that barrio', () => {
+    renderDashboard()
+
+    fireEvent.click(screen.getByRole('button', { name: 'La Esperanza' }))
+
+    expect(screen.getByRole('heading', { level: 2, name: 'Reportes específicos' })).toBeTruthy()
+    expect(screen.getByDisplayValue('La Esperanza')).toBeTruthy()
+    expect(within(kpiCard('Reportes totales')).getByText('3')).toBeTruthy()
+  })
+
+  it('includes citizen reports when the source toggle is checked', () => {
+    window.localStorage.setItem(
+      CITIZEN_STORAGE_KEY,
+      JSON.stringify([
+        {
+          id: 'citizen-001',
+          barrio: 'La Esperanza',
+          comuna: 'Comuna 2',
+          category: 'alcantarillado',
+          severity: 'alta',
+          description: 'Caño destapado reportado por un vecino',
+          date: '2026-08-20T10:00:00.000Z',
+        },
+      ]),
+    )
+
+    renderDashboard()
+
+    expect(within(kpiCard('Reportes totales')).getByText('20')).toBeTruthy()
+
+    fireEvent.click(screen.getByRole('checkbox', { name: /Incluir reportes ciudadanos/ }))
+
+    expect(within(kpiCard('Reportes totales')).getByText('21')).toBeTruthy()
+  })
+
+  it('shows the active session and logs out back to /login', () => {
+    renderDashboard()
+
+    expect(screen.getByText('Sesión: analista')).toBeTruthy()
+    expect(screen.getByRole('region', { name: 'Sesión' })).toBeTruthy()
+    expect(getSession()?.username).toBe('analista')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cerrar sesión' }))
+
+    expect(getSession()).toBeNull()
+    expect(screen.getByText('Iniciar sesión')).toBeTruthy()
   })
 })
