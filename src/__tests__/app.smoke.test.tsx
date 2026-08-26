@@ -1,7 +1,20 @@
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { AppRoutes } from '../App'
+
+// jsdom cannot instantiate a real Leaflet map, so /mapa is rendered with
+// functional stubs (the async factory avoids the vi.mock hoisting pitfall).
+vi.mock('react-leaflet', async () => {
+  const React = await import('react')
+  return {
+    MapContainer: ({ children }: { children?: React.ReactNode }) =>
+      React.createElement('div', { 'data-testid': 'mapa-container' }, children),
+    TileLayer: () => null,
+    CircleMarker: () => null,
+    Popup: () => null,
+  }
+})
 
 /** Renders the shared route tree at a given path without the browser router. */
 function renderRoute(initialPath: string) {
@@ -45,7 +58,7 @@ describe('App', () => {
     expect(heading.textContent).toBe(expectedTitle)
   })
 
-  it.each(['/mapa', '/dashboard'])('shows the construction badge on %s', (path) => {
+  it.each(['/dashboard'])('shows the construction badge on %s', (path) => {
     renderRoute(path)
 
     expect(screen.getByRole('heading', { level: 1 })).toBeTruthy()
