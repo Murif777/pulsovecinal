@@ -6,6 +6,20 @@ import { ALL_CATEGORIES, CATEGORY_LABELS, SEVERITY_WEIGHTS } from '../../lib/typ
  * everything is unit-testable in jsdom and reusable by any renderer.
  */
 
+/**
+ * Emoji glyph for each complaint category, shared by the filter chips and the
+ * popup breakdown rows. Decorative only: consumers must render it with
+ * aria-hidden so accessible names stay clean.
+ */
+export const CATEGORY_ICONS: Readonly<Record<ComplaintCategory, string>> = {
+  seguridad: '🔒',
+  alcantarillado: '💧',
+  energia: '⚡',
+  vias: '🛣️',
+  espacios_publicos: '🌳',
+  otros: '📋',
+}
+
 /** Traffic-light hex color for each severity (Tailwind 500 tones). */
 export function severityColor(severity: Severity): string {
   switch (severity) {
