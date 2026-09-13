@@ -216,7 +216,7 @@ export default function DashboardPage() {
         </SummaryBadge>
         <SummaryBadge icon="🧭">{comunaSummary}</SummaryBadge>
         <SummaryBadge icon="👁️">Vista: {VIEW_LABEL[view]}</SummaryBadge>
-        <SummaryBadge icon="👤">Sesión: {session?.username ?? 'sin sesión'}</SummaryBadge>
+        <SummaryBadge icon="👤">Sesión: {session?.usuario.usuario ?? 'sin sesión'}</SummaryBadge>
       </ul>
 
       <div className="mt-4 lg:hidden">
@@ -243,7 +243,11 @@ export default function DashboardPage() {
             bounds={bounds}
             citizenCount={citizenCount}
             onExportCsv={() => downloadCsv(toCsv(reportRows), 'pulsovecinal-reportes.csv')}
-            session={session}
+            session={
+              session === null
+                ? null
+                : { username: session.usuario.usuario, loggedInAt: session.loggedInAt }
+            }
             onLogout={() => {
               logout()
               navigate('/login', { replace: true })

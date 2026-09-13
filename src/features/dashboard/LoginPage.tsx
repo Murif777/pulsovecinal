@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { ApiError } from '../../lib/api'
 import { login } from './auth'
 
 /** Decorative heartbeat glyph for the login card (the PulsoVecinal mark). */
@@ -36,12 +37,16 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (login(username, password)) {
+    setError(null)
+    try {
+      await login(username, password)
       navigate(from, { replace: true })
-    } else {
-      setError('Credenciales incorrectas. Revisa el hint de la demo.')
+    } catch (err) {
+      setError(
+        err instanceof ApiError ? err.message : 'No se pudo iniciar sesión. Intenta de nuevo.',
+      )
     }
   }
 

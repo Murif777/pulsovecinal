@@ -2,7 +2,7 @@ import { fireEvent, render, screen, within } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import DashboardPage from '../DashboardPage'
-import { DEMO_CREDENTIALS, getSession, login } from '../auth'
+import { getSession, SESSION_STORAGE_KEY } from '../auth'
 import { CITIZEN_STORAGE_KEY } from '../citizenReports'
 import { installMemoryLocalStorage } from './memoryLocalStorage'
 
@@ -56,7 +56,14 @@ function renderDashboard() {
 
 beforeEach(() => {
   installMemoryLocalStorage()
-  login(DEMO_CREDENTIALS.username, DEMO_CREDENTIALS.password)
+  window.localStorage.setItem(
+    SESSION_STORAGE_KEY,
+    JSON.stringify({
+      token: 'jwt-token',
+      usuario: { id: 1, usuario: 'analista', rol: 'analista' },
+      loggedInAt: '2026-08-19T13:55:00.000Z',
+    }),
+  )
 })
 
 describe('DashboardPage', () => {
@@ -154,7 +161,7 @@ describe('DashboardPage', () => {
 
     expect(screen.getByText('Sesión: analista')).toBeTruthy()
     expect(screen.getByRole('region', { name: 'Sesión' })).toBeTruthy()
-    expect(getSession()?.username).toBe('analista')
+    expect(getSession()?.usuario.usuario).toBe('analista')
 
     fireEvent.click(screen.getByRole('button', { name: 'Cerrar sesión' }))
 
