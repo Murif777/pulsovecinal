@@ -17,6 +17,14 @@ coverage
 .env
 .env.*
 !.env.example
+
+# Python (capa API)
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.mypy_cache/
+*.egg-info/
 db/.env
 
 # TypeScript build info

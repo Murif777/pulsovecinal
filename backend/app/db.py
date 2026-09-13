@@ -1,0 +1,20 @@
+"""Engine SQLAlchemy + SessionLocal. No crea ni migra el esquema."""
+
+from collections.abc import Generator
+
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session, sessionmaker
+
+from app.config import get_settings
+
+settings = get_settings()
+engine = create_engine(settings.sqlalchemy_url, pool_pre_ping=True)
+SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
+
+
+def get_db() -> Generator[Session, None, None]:
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
