@@ -5,3 +5,25 @@ services:
     ports:
       - "8080:80"
     restart: unless-stopped
+
+  db:
+    image: postgis/postgis:16-3.4-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-pulso}
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?Falta POSTGRES_PASSWORD; crea tu .env copiando db/.env.example a la raiz}"
+      POSTGRES_DB: ${POSTGRES_DB:-pulsovecinal}
+    ports:
+      - "${DB_PORT:-5433}:5432"          # 5433 en el host para no chocar con un PG local
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d:ro   # schema + seed (solo primer arranque)
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-pulso} -d ${POSTGRES_DB:-pulsovecinal}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+    restart: unless-stopped
+
+volumes:
+  pgdata:
