@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
-from app.routers import barrios, dashboard, health, map_reports, surveys
+from app.routers import auth, barrios, dashboard, health, map_reports, surveys
 
 
 def create_app() -> FastAPI:
@@ -23,6 +23,7 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
     application.include_router(health.router)
+    application.include_router(auth.router)
     application.include_router(barrios.router)
     application.include_router(surveys.router)
     application.include_router(map_reports.router)
