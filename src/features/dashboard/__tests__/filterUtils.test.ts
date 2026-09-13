@@ -65,16 +65,14 @@ describe('applyFilters', () => {
 
 describe('activeFilterCount / chips', () => {
   it('counts each active group once', () => {
-    // The citizen source is ON by default, so the base filters already count 1.
-    expect(activeFilterCount(base)).toBe(1)
+    expect(activeFilterCount(base)).toBe(0)
     expect(
       activeFilterCount({
         ...base,
         search: 'esperanza',
         comunas: ['Comuna 2', 'Comuna 1'],
-        includeCitizen: true,
       }),
-    ).toBe(3)
+    ).toBe(2)
   })
 
   it('builds removable chips and removeFilterChip clears the matching group', () => {
@@ -86,7 +84,6 @@ describe('activeFilterCount / chips', () => {
       severities: ['alta'],
       from: '2026-08-01',
       to: '2026-08-10',
-      includeCitizen: true,
     }
     const chips = activeFilterChips(filters)
     expect(chips.map((chip) => chip.key)).toEqual([
@@ -95,20 +92,12 @@ describe('activeFilterCount / chips', () => {
       'category:energia',
       'severity:alta',
       'period',
-      'citizen',
     ])
     expect(chips.find((chip) => chip.key === 'category:energia')?.label).toBe('Energía eléctrica')
 
     expect(removeFilterChip(filters, 'search').search).toBe('')
     expect(removeFilterChip(filters, 'comuna:Comuna 2').comunas).toEqual([])
-    expect(removeFilterChip(filters, 'citizen').includeCitizen).toBe(false)
     expect(removeFilterChip(filters, 'period').from).toBeNull()
-  })
-})
-
-describe('EMPTY_FILTERS', () => {
-  it('includes citizen reports by default', () => {
-    expect(EMPTY_FILTERS.includeCitizen).toBe(true)
   })
 })
 

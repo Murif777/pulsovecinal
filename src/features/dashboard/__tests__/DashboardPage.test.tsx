@@ -1,10 +1,17 @@
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import DashboardPage from '../DashboardPage'
 import { getSession, SESSION_STORAGE_KEY } from '../auth'
-import { CITIZEN_STORAGE_KEY } from '../citizenReports'
+import { getDashboardSummary, mockSurveyResponses } from '../../../lib/mockData'
+import type { DashboardSummary, SurveyResponse } from '../../../lib/types'
 import { installMemoryLocalStorage } from './memoryLocalStorage'
+
+// The API fixtures mirror the backend contract: GET /api/encuestas returns the
+// survey responses and GET /api/dashboard/resumen the aggregated summary; both
+// derive from the same mockData seed the backend aggregators mirror.
+const apiSurveys: readonly SurveyResponse[] = mockSurveyResponses
+const apiSummary: DashboardSummary = getDashboardSummary(apiSurveys)
 
 // jsdom cannot measure real sizes (ResponsiveContainer uses ResizeObserver),
 // so recharts is replaced with functional stubs (the async factory avoids the
@@ -28,6 +35,30 @@ vi.mock('recharts', async () => {
     Area: () => null,
   }
 })
+
+const fetchMock = vi.fn<typeof fetch>()
+
+function okJson(body: unknown): Response {
+  return { ok: true, status: 200, json: async () => body } as Response
+}
+
+function failJson(status: number): Response {
+  return { ok: false, status, json: async () => ({ detail: 'No autorizado' }) } as Response
+}
+
+/** Default healthy API routes used by most tests. */
+function stubHealthyApi() {
+  fetchMock.mockImplementation((input) => {
+    const url = String(input)
+    if (url === '/api/encuestas') {
+      return Promise.resolve(okJson(apiSurveys))
+    }
+    if (url === '/api/dashboard/resumen') {
+      return Promise.resolve(okJson(apiSummary))
+    }
+    return Promise.resolve(failJson(404))
+  })
+}
 
 /** Climbs from a KPI label to its card so value assertions stay scoped. */
 function kpiCard(label: string): HTMLElement {
@@ -64,12 +95,20 @@ beforeEach(() => {
       loggedInAt: '2026-08-19T13:55:00.000Z',
     }),
   )
+  vi.stubGlobal('fetch', fetchMock)
+  fetchMock.mockReset()
+  stubHealthyApi()
+})
+
+afterEach(() => {
+  vi.unstubAllGlobals()
 })
 
 describe('DashboardPage', () => {
-  it('renders the four KPI cards with the full dataset values (20, 15, Energía eléctrica, 2)', () => {
+  it('renders the four KPI cards with the API values (20, 15, Energía eléctrica, 2)', async () => {
     renderDashboard()
 
+    expect(await screen.findByText('20')).toBeTruthy()
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Dashboard de criticidad')
     expect(within(kpiCard('Reportes totales')).getByText('20')).toBeTruthy()
     expect(within(kpiCard('Barrios cubiertos')).getByText('15')).toBeTruthy()
@@ -77,9 +116,10 @@ describe('DashboardPage', () => {
     expect(within(kpiCard('Reportes críticos')).getByText('2')).toBeTruthy()
   })
 
-  it('renders the ranking table with La Esperanza in the first row', () => {
+  it('renders the ranking table with La Esperanza in the first row', async () => {
     renderDashboard()
 
+    await screen.findByText('20')
     const table = screen.getByRole('table')
     const rows = within(table).getAllByRole('row')
     const firstRow = rows[1]
@@ -90,15 +130,17 @@ describe('DashboardPage', () => {
     expect(within(firstRow).getByText('7')).toBeTruthy()
   })
 
-  it('renders the three chart containers (mocked recharts)', () => {
+  it('renders the three chart containers (mocked recharts)', async () => {
     renderDashboard()
 
+    await screen.findByText('20')
     expect(screen.getAllByTestId('chart-container')).toHaveLength(3)
   })
 
-  it('re-derives KPIs and ranking when a comuna chip is selected', () => {
+  it('re-derives KPIs and ranking when a comuna chip is selected', async () => {
     renderDashboard()
 
+    await screen.findByText('20')
     fireEvent.click(screen.getByRole('button', { name: 'Comuna 2' }))
 
     expect(within(kpiCard('Reportes totales')).getByText('5')).toBeTruthy()
@@ -106,9 +148,10 @@ describe('DashboardPage', () => {
     expect(screen.getByText('Comuna activa: Comuna 2')).toBeTruthy()
   })
 
-  it('opens a specific report detail from the reportes view', () => {
+  it('opens a specific report detail from the reportes view', async () => {
     renderDashboard()
 
+    await screen.findByText('20')
     fireEvent.click(within(viewGroup()).getByRole('button', { name: 'Reportes' }))
 
     expect(screen.getByRole('heading', { level: 2, name: 'Reportes específicos' })).toBeTruthy()
@@ -120,9 +163,10 @@ describe('DashboardPage', () => {
     expect(screen.getByText('Diego Molina')).toBeTruthy()
   })
 
-  it('drills down from the ranking into the reports of that barrio', () => {
+  it('drills down from the ranking into the reports of that barrio', async () => {
     renderDashboard()
 
+    await screen.findByText('20')
     fireEvent.click(screen.getByRole('button', { name: 'La Esperanza' }))
 
     expect(screen.getByRole('heading', { level: 2, name: 'Reportes específicos' })).toBeTruthy()
@@ -130,35 +174,10 @@ describe('DashboardPage', () => {
     expect(within(kpiCard('Reportes totales')).getByText('3')).toBeTruthy()
   })
 
-  it('includes citizen reports by default and hides them when the source toggle is unchecked', () => {
-    window.localStorage.setItem(
-      CITIZEN_STORAGE_KEY,
-      JSON.stringify([
-        {
-          id: 'citizen-001',
-          barrio: 'La Esperanza',
-          comuna: 'Comuna 2',
-          category: 'alcantarillado',
-          severity: 'alta',
-          description: 'Caño destapado reportado por un vecino',
-          date: '2026-08-20T10:00:00.000Z',
-        },
-      ]),
-    )
-
+  it('shows the active session and logs out back to /login', async () => {
     renderDashboard()
 
-    // includeCitizen defaults to true: the stored citizen report is already merged.
-    expect(within(kpiCard('Reportes totales')).getByText('21')).toBeTruthy()
-
-    fireEvent.click(screen.getByRole('checkbox', { name: /Incluir reportes ciudadanos/ }))
-
-    expect(within(kpiCard('Reportes totales')).getByText('20')).toBeTruthy()
-  })
-
-  it('shows the active session and logs out back to /login', () => {
-    renderDashboard()
-
+    await screen.findByText('20')
     expect(screen.getByText('Sesión: analista')).toBeTruthy()
     expect(screen.getByRole('region', { name: 'Sesión' })).toBeTruthy()
     expect(getSession()?.usuario.usuario).toBe('analista')
@@ -167,5 +186,34 @@ describe('DashboardPage', () => {
 
     expect(getSession()).toBeNull()
     expect(screen.getByText('Iniciar sesión')).toBeTruthy()
+  })
+
+  it('clears the session and redirects to /login when the API answers 401', async () => {
+    fetchMock.mockImplementation((input) => {
+      const url = String(input)
+      if (url === '/api/dashboard/resumen') {
+        return Promise.resolve(failJson(401))
+      }
+      return Promise.resolve(okJson(apiSurveys))
+    })
+
+    renderDashboard()
+
+    expect(await screen.findByText('Iniciar sesión')).toBeTruthy()
+    expect(getSession()).toBeNull()
+  })
+
+  it('shows an alert and reloads the data when Reintentar is pressed', async () => {
+    fetchMock.mockImplementation(() => Promise.reject(new Error('Servidor caído')))
+
+    renderDashboard()
+
+    expect(await screen.findByRole('alert')).toBeTruthy()
+    expect(screen.getByText('No se pudieron cargar los datos del dashboard.')).toBeTruthy()
+
+    stubHealthyApi()
+    fireEvent.click(screen.getByRole('button', { name: 'Reintentar dashboard' }))
+
+    expect(await screen.findByText('20')).toBeTruthy()
   })
 })

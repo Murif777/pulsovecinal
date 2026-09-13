@@ -1,27 +1,17 @@
 import { describe, expect, it } from 'vitest'
 import { mockSurveyResponses } from '../../../lib/mockData'
-import { tagMockResponses } from '../citizenReports'
-import {
-  paginate,
-  sortRankingRows,
-  sortReportRows,
-  toCsv,
-  toReportRows,
-} from '../reportUtils'
+import { paginate, sortRankingRows, sortReportRows, toCsv, toReportRows } from '../reportUtils'
 import type { ReportRow } from '../reportUtils'
 
-const rows = toReportRows(tagMockResponses(mockSurveyResponses))
+const rows = toReportRows(mockSurveyResponses)
 
 describe('toReportRows', () => {
-  it('maps sourced responses and fills a missing description with an empty string', () => {
+  it('maps API responses and fills a missing description with an empty string', () => {
     expect(rows).toHaveLength(20)
     expect(rows[0]?.id).toBe('resp-001')
-    expect(rows[0]?.source).toBe('mock')
     expect(rows[0]?.description).toContain('Alcantarillado')
 
-    const withoutDescription = toReportRows(
-      tagMockResponses([{ ...mockSurveyResponses[0]!, description: undefined }]),
-    )
+    const withoutDescription = toReportRows([{ ...mockSurveyResponses[0]!, description: undefined }])
     expect(withoutDescription[0]?.description).toBe('')
   })
 })
@@ -76,12 +66,11 @@ describe('toCsv', () => {
         description: 'Dijo "urgente"; revisar',
         date: '2026-08-01T14:30:00.000Z',
         encuestador: 'Ana Martínez',
-        source: 'mock',
       },
     ]
     const csv = toCsv(sample)
     expect(csv.startsWith('\ufeff')).toBe(true)
-    expect(csv).toContain('id;barrio;comuna;categoría;severidad;descripción;fecha;encuestador;origen')
+    expect(csv).toContain('id;barrio;comuna;categoría;severidad;descripción;fecha;encuestador')
     expect(csv).toContain('"Dijo ""urgente""; revisar"')
     expect(csv).toContain('Crítica')
     expect(csv).toContain('Alcantarillado')

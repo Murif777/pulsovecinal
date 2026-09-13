@@ -1,6 +1,5 @@
 import { CATEGORY_LABELS, SEVERITY_WEIGHTS } from '../../lib/types'
-import type { ComplaintCategory, Severity } from '../../lib/types'
-import type { ReportSource, SourcedSurveyResponse } from './citizenReports'
+import type { ComplaintCategory, Severity, SurveyResponse } from '../../lib/types'
 import { SEVERITY_LABELS } from './dashboardUtils'
 
 /** Display-ready row of the specific-reports table. */
@@ -13,7 +12,6 @@ export interface ReportRow {
   readonly description: string
   readonly date: string
   readonly encuestador?: string
-  readonly source: ReportSource
 }
 
 export type ReportSortKey = 'date' | 'barrio' | 'severity' | 'category'
@@ -28,8 +26,8 @@ export const DEFAULT_REPORT_SORT: ReportSort = { key: 'date', direction: 'desc' 
 
 export const PAGE_SIZE = 8
 
-/** Maps sourced responses to table rows (empty description becomes ''). */
-export function toReportRows(responses: readonly SourcedSurveyResponse[]): ReportRow[] {
+/** Maps API survey responses to table rows (empty description becomes ''). */
+export function toReportRows(responses: readonly SurveyResponse[]): ReportRow[] {
   return responses.map((item) => ({
     id: item.id,
     barrio: item.barrio,
@@ -39,7 +37,6 @@ export function toReportRows(responses: readonly SourcedSurveyResponse[]): Repor
     description: item.description ?? '',
     date: item.date,
     encuestador: item.encuestador,
-    source: item.source,
   }))
 }
 
@@ -110,7 +107,6 @@ const CSV_HEADERS = [
   'descripción',
   'fecha',
   'encuestador',
-  'origen',
 ] as const
 
 /**
@@ -130,7 +126,6 @@ export function toCsv(rows: readonly ReportRow[]): string {
         row.description,
         row.date,
         row.encuestador ?? '',
-        row.source === 'ciudadano' ? 'ciudadano' : 'mock',
       ]
         .map(csvCell)
         .join(';'),
