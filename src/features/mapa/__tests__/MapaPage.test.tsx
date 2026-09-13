@@ -3,6 +3,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import MapaPage from '../MapaPage'
 import { getMapReports as computeMockReports, mockSurveyResponses } from '../../../lib/mockData'
 import type { MapReport, SurveyResponse } from '../../../lib/types'
+import {
+  createFetchMock,
+  errorJson,
+  installFetchMock,
+  okJson,
+  stubRoutes,
+  uninstallFetchMock,
+} from '../../../lib/__tests__/fetchMock'
+import type { FetchRoute } from '../../../lib/__tests__/fetchMock'
 
 // jsdom cannot instantiate a real Leaflet map, so react-leaflet is replaced
 // with functional stubs (the async factory avoids the vi.mock hoisting pitfall).
@@ -17,7 +26,7 @@ vi.mock('react-leaflet', async () => {
   }
 })
 
-const fetchMock = vi.fn<typeof fetch>()
+const fetchMock = createFetchMock()
 
 /**
  * Aggregated reports the fake backend serves on GET /api/mapa/reportes,
@@ -28,22 +37,12 @@ function apiReports(extra: readonly SurveyResponse[] = []): MapReport[] {
   return computeMockReports([...mockSurveyResponses, ...extra])
 }
 
-function okJson(body: unknown): Response {
-  return { ok: true, status: 200, json: async () => body } as unknown as Response
-}
-
-function badJson(status: number, body: unknown): Response {
-  return { ok: false, status, json: async () => body } as unknown as Response
-}
-
+/** Routes the mock for the single endpoint MapaPage consumes. */
 function stubMapEndpoint(reports: MapReport[]) {
-  fetchMock.mockImplementation(async (input) => {
-    const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url
-    if (url === '/api/mapa/reportes') {
-      return okJson(reports)
-    }
-    throw new Error(`URL inesperada en el test: ${url}`)
-  })
+  stubRoutes(
+    fetchMock,
+    new Map<string, FetchRoute>([['/api/mapa/reportes', () => okJson(reports)]]),
+  )
 }
 
 /** Renders the page and waits until the API reports arrive and the map mounts. */
@@ -53,13 +52,12 @@ async function renderLoadedMap() {
 }
 
 beforeEach(() => {
-  fetchMock.mockReset()
-  vi.stubGlobal('fetch', fetchMock)
+  installFetchMock(fetchMock)
   stubMapEndpoint(apiReports())
 })
 
 afterEach(() => {
-  vi.unstubAllGlobals()
+  uninstallFetchMock()
 })
 
 describe('MapaPage', () => {
@@ -138,14 +136,15 @@ describe('MapaPage', () => {
 
   it('shows a load error and recovers via the retry button', async () => {
     let failOnce = true
-    fetchMock.mockReset()
-    fetchMock.mockImplementation(async (input) => {
-      const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url
-      if (url === '/api/mapa/reportes') {
-        return failOnce ? badJson(500, { detail: 'Error interno del servidor' }) : okJson(apiReports())
-      }
-      throw new Error(`URL inesperada en el test: ${url}`)
-    })
+    stubRoutes(
+      fetchMock,
+      new Map<string, FetchRoute>([
+        [
+          '/api/mapa/reportes',
+          () => (failOnce ? errorJson(500, { detail: 'Error interno del servidor' }) : okJson(apiReports())),
+        ],
+      ]),
+    )
 
     render(<MapaPage />)
 

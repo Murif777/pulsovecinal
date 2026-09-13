@@ -5,6 +5,15 @@ import DashboardPage from '../DashboardPage'
 import { getSession, SESSION_STORAGE_KEY } from '../auth'
 import { getDashboardSummary, mockSurveyResponses } from '../../../lib/mockData'
 import type { DashboardSummary, SurveyResponse } from '../../../lib/types'
+import {
+  createFetchMock,
+  errorJson,
+  installFetchMock,
+  okJson,
+  stubRoutes,
+  uninstallFetchMock,
+} from '../../../lib/__tests__/fetchMock'
+import type { FetchRoute } from '../../../lib/__tests__/fetchMock'
 import { installMemoryLocalStorage } from './memoryLocalStorage'
 
 // The API fixtures mirror the backend contract: GET /api/encuestas returns the
@@ -36,28 +45,17 @@ vi.mock('recharts', async () => {
   }
 })
 
-const fetchMock = vi.fn<typeof fetch>()
-
-function okJson(body: unknown): Response {
-  return { ok: true, status: 200, json: async () => body } as Response
-}
-
-function failJson(status: number): Response {
-  return { ok: false, status, json: async () => ({ detail: 'No autorizado' }) } as Response
-}
+const fetchMock = createFetchMock()
 
 /** Default healthy API routes used by most tests. */
 function stubHealthyApi() {
-  fetchMock.mockImplementation((input) => {
-    const url = String(input)
-    if (url === '/api/encuestas') {
-      return Promise.resolve(okJson(apiSurveys))
-    }
-    if (url === '/api/dashboard/resumen') {
-      return Promise.resolve(okJson(apiSummary))
-    }
-    return Promise.resolve(failJson(404))
-  })
+  stubRoutes(
+    fetchMock,
+    new Map<string, FetchRoute>([
+      ['/api/encuestas', () => okJson(apiSurveys)],
+      ['/api/dashboard/resumen', () => okJson(apiSummary)],
+    ]),
+  )
 }
 
 /** Climbs from a KPI label to its card so value assertions stay scoped. */
@@ -95,13 +93,12 @@ beforeEach(() => {
       loggedInAt: '2026-08-19T13:55:00.000Z',
     }),
   )
-  vi.stubGlobal('fetch', fetchMock)
-  fetchMock.mockReset()
+  installFetchMock(fetchMock)
   stubHealthyApi()
 })
 
 afterEach(() => {
-  vi.unstubAllGlobals()
+  uninstallFetchMock()
 })
 
 describe('DashboardPage', () => {
@@ -189,13 +186,13 @@ describe('DashboardPage', () => {
   })
 
   it('clears the session and redirects to /login when the API answers 401', async () => {
-    fetchMock.mockImplementation((input) => {
-      const url = String(input)
-      if (url === '/api/dashboard/resumen') {
-        return Promise.resolve(failJson(401))
-      }
-      return Promise.resolve(okJson(apiSurveys))
-    })
+    stubRoutes(
+      fetchMock,
+      new Map<string, FetchRoute>([
+        ['/api/encuestas', () => okJson(apiSurveys)],
+        ['/api/dashboard/resumen', () => errorJson(401, { detail: 'No autorizado' })],
+      ]),
+    )
 
     renderDashboard()
 

@@ -1,41 +1,34 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { getSession, isAuthenticated, login, logout, SESSION_STORAGE_KEY } from '../auth'
 import { installMemoryLocalStorage } from './memoryLocalStorage'
+import {
+  createFetchMock,
+  errorJson,
+  installFetchMock,
+  okJson,
+  uninstallFetchMock,
+} from '../../../lib/__tests__/fetchMock'
 
-const fetchMock = vi.fn<typeof fetch>()
-
-function okAuthResponse(): Response {
-  return {
-    ok: true,
-    status: 200,
-    json: async () => ({
-      token: 'jwt-token',
-      usuario: { id: 1, usuario: 'analista', rol: 'analista', nombre: 'Analista Demo' },
-    }),
-  } as unknown as Response
+/** Body served by the fake backend for POST /api/auth/login. */
+const AUTH_BODY = {
+  token: 'jwt-token',
+  usuario: { id: 1, usuario: 'analista', rol: 'analista', nombre: 'Analista Demo' },
 }
 
-function badAuthResponse(): Response {
-  return {
-    ok: false,
-    status: 401,
-    json: async () => ({ detail: 'Credenciales inválidas' }),
-  } as unknown as Response
-}
+const fetchMock = createFetchMock()
 
 beforeEach(() => {
   installMemoryLocalStorage()
-  fetchMock.mockReset()
-  vi.stubGlobal('fetch', fetchMock)
+  installFetchMock(fetchMock)
 })
 
 afterEach(() => {
-  vi.unstubAllGlobals()
+  uninstallFetchMock()
 })
 
 describe('login', () => {
   it('posts the credentials to /api/auth/login and persists token + usuario', async () => {
-    fetchMock.mockResolvedValue(okAuthResponse())
+    fetchMock.mockResolvedValue(okJson(AUTH_BODY))
 
     const response = await login('analista', 'pulso2026')
 
@@ -55,7 +48,7 @@ describe('login', () => {
   })
 
   it('rejects with the API 401 detail without writing anything', async () => {
-    fetchMock.mockResolvedValue(badAuthResponse())
+    fetchMock.mockResolvedValue(errorJson(401, { detail: 'Credenciales inválidas' }))
 
     await expect(login('analista', 'incorrecta')).rejects.toThrow('Credenciales inválidas')
     expect(window.localStorage.getItem(SESSION_STORAGE_KEY)).toBeNull()
@@ -64,7 +57,7 @@ describe('login', () => {
 
 describe('logout', () => {
   it('clears the stored session', async () => {
-    fetchMock.mockResolvedValue(okAuthResponse())
+    fetchMock.mockResolvedValue(okJson(AUTH_BODY))
     await login('analista', 'pulso2026')
     expect(isAuthenticated()).toBe(true)
 
@@ -79,7 +72,7 @@ describe('isAuthenticated', () => {
   it('reflects whether a valid session is stored', async () => {
     expect(isAuthenticated()).toBe(false)
 
-    fetchMock.mockResolvedValue(okAuthResponse())
+    fetchMock.mockResolvedValue(okJson(AUTH_BODY))
     await login('analista', 'pulso2026')
 
     expect(isAuthenticated()).toBe(true)

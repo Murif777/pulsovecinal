@@ -1,29 +1,23 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import LoginPage from '../LoginPage'
 import { installMemoryLocalStorage } from './memoryLocalStorage'
+import {
+  createFetchMock,
+  errorJson,
+  installFetchMock,
+  okJson,
+  uninstallFetchMock,
+} from '../../../lib/__tests__/fetchMock'
 
-const fetchMock = vi.fn<typeof fetch>()
-
-function okAuthResponse(): Response {
-  return {
-    ok: true,
-    status: 200,
-    json: async () => ({
-      token: 'jwt-token',
-      usuario: { id: 1, usuario: 'analista', rol: 'analista', nombre: 'Analista Demo' },
-    }),
-  } as unknown as Response
+/** Body served by the fake backend for POST /api/auth/login. */
+const AUTH_BODY = {
+  token: 'jwt-token',
+  usuario: { id: 1, usuario: 'analista', rol: 'analista', nombre: 'Analista Demo' },
 }
 
-function badAuthResponse(): Response {
-  return {
-    ok: false,
-    status: 401,
-    json: async () => ({ detail: 'Credenciales inválidas' }),
-  } as unknown as Response
-}
+const fetchMock = createFetchMock()
 
 /** Renders the login page with a fake /dashboard destination to observe navigation. */
 function renderLogin() {
@@ -45,12 +39,11 @@ function submit(username: string, password: string) {
 
 beforeEach(() => {
   installMemoryLocalStorage()
-  fetchMock.mockReset()
-  vi.stubGlobal('fetch', fetchMock)
+  installFetchMock(fetchMock)
 })
 
 afterEach(() => {
-  vi.unstubAllGlobals()
+  uninstallFetchMock()
 })
 
 describe('LoginPage', () => {
@@ -65,7 +58,7 @@ describe('LoginPage', () => {
   })
 
   it('shows an alert with the API 401 detail and does not navigate with wrong credentials', async () => {
-    fetchMock.mockResolvedValue(badAuthResponse())
+    fetchMock.mockResolvedValue(errorJson(401, { detail: 'Credenciales inválidas' }))
     renderLogin()
 
     submit('analista', 'mala')
@@ -76,7 +69,7 @@ describe('LoginPage', () => {
   })
 
   it('navigates to /dashboard after a successful login', async () => {
-    fetchMock.mockResolvedValue(okAuthResponse())
+    fetchMock.mockResolvedValue(okJson(AUTH_BODY))
     renderLogin()
 
     submit('analista', 'pulso2026')

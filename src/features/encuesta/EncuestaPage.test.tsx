@@ -1,8 +1,17 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import EncuestaPage from './EncuestaPage'
+import {
+  createFetchMock,
+  errorJson,
+  installFetchMock,
+  okJson,
+  stubRoutes,
+  uninstallFetchMock,
+} from '../../lib/__tests__/fetchMock'
+import type { FetchRoute } from '../../lib/__tests__/fetchMock'
 
-const fetchMock = vi.fn<typeof fetch>()
+const fetchMock = createFetchMock()
 
 const BARRIOS_FIXTURE = [
   { nombre: 'La Esperanza', comuna: 'Comuna 2', lat: 10.461, lng: -73.248 },
@@ -12,46 +21,42 @@ const BARRIOS_FIXTURE = [
 /** Responses the fake backend returns for GET /api/encuestas (reset per test). */
 let storedResponses: unknown[] = []
 
-function okJson(body: unknown, status = 200): Response {
-  return { ok: true, status, json: async () => body } as unknown as Response
-}
-
-function badJson(status: number, body: unknown): Response {
-  return { ok: false, status, json: async () => body } as unknown as Response
-}
-
-/** Default fake backend: barrios + GET/POST encuestas backed by `storedResponses`. */
+/**
+ * Default fake backend: barrios + GET/POST encuestas backed by `storedResponses`.
+ * A POST replaces the store with the created report, mirroring the single-user demo.
+ */
 function installDefaultBackend() {
-  fetchMock.mockImplementation(async (input, init) => {
-    const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url
-    const method = init?.method ?? 'GET'
-    if (url === '/api/barrios') {
-      return okJson(BARRIOS_FIXTURE)
-    }
-    if (url === '/api/encuestas' && method === 'POST') {
-      const body = JSON.parse(String(init?.body)) as {
-        barrio: string
-        category: string
-        severity: string
-        description?: string
-      }
-      const created = {
-        id: 'citizen-001',
-        barrio: body.barrio,
-        comuna: BARRIOS_FIXTURE.find((barrio) => barrio.nombre === body.barrio)?.comuna ?? '',
-        category: body.category,
-        severity: body.severity,
-        description: body.description,
-        date: '2026-08-20T10:00:00.000Z',
-      }
-      storedResponses = [created]
-      return okJson(created, 201)
-    }
-    if (url === '/api/encuestas') {
-      return okJson(storedResponses)
-    }
-    throw new Error(`URL inesperada en el test: ${url}`)
-  })
+  stubRoutes(
+    fetchMock,
+    new Map<string, FetchRoute>([
+      ['/api/barrios', () => okJson(BARRIOS_FIXTURE)],
+      [
+        '/api/encuestas',
+        (_input, init) => {
+          if ((init?.method ?? 'GET') === 'POST') {
+            const body = JSON.parse(String(init?.body)) as {
+              barrio: string
+              category: string
+              severity: string
+              description?: string
+            }
+            const created = {
+              id: 'citizen-001',
+              barrio: body.barrio,
+              comuna: BARRIOS_FIXTURE.find((barrio) => barrio.nombre === body.barrio)?.comuna ?? '',
+              category: body.category,
+              severity: body.severity,
+              description: body.description,
+              date: '2026-08-20T10:00:00.000Z',
+            }
+            storedResponses = [created]
+            return okJson(created, 201)
+          }
+          return okJson(storedResponses)
+        },
+      ],
+    ]),
+  )
 }
 
 /** Renders the page and waits until the barrio registry arrives from the API. */
@@ -71,13 +76,12 @@ function fillValidForm() {
 
 beforeEach(() => {
   storedResponses = []
-  fetchMock.mockReset()
-  vi.stubGlobal('fetch', fetchMock)
+  installFetchMock(fetchMock)
   installDefaultBackend()
 })
 
 afterEach(() => {
-  vi.unstubAllGlobals()
+  uninstallFetchMock()
 })
 
 describe('EncuestaPage', () => {
@@ -217,17 +221,16 @@ describe('EncuestaPage', () => {
 
   it('shows a load error for the barrios and retries', async () => {
     let barriosOk = false
-    fetchMock.mockReset()
-    fetchMock.mockImplementation(async (input) => {
-      const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url
-      if (url === '/api/barrios') {
-        return barriosOk ? okJson(BARRIOS_FIXTURE) : badJson(500, { detail: 'Error interno del servidor' })
-      }
-      if (url === '/api/encuestas') {
-        return okJson(storedResponses)
-      }
-      throw new Error(`URL inesperada en el test: ${url}`)
-    })
+    stubRoutes(
+      fetchMock,
+      new Map<string, FetchRoute>([
+        [
+          '/api/barrios',
+          () => (barriosOk ? okJson(BARRIOS_FIXTURE) : errorJson(500, { detail: 'Error interno del servidor' })),
+        ],
+        ['/api/encuestas', () => okJson(storedResponses)],
+      ]),
+    )
 
     render(<EncuestaPage />)
 
@@ -240,22 +243,21 @@ describe('EncuestaPage', () => {
   })
 
   it('shows a submit error and keeps the form values for correction', async () => {
-    const failPost = true
-    fetchMock.mockReset()
-    fetchMock.mockImplementation(async (input, init) => {
-      const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url
-      const method = init?.method ?? 'GET'
-      if (url === '/api/barrios') {
-        return okJson(BARRIOS_FIXTURE)
-      }
-      if (url === '/api/encuestas' && method === 'POST') {
-        return failPost ? badJson(422, { detail: 'Barrio no existe' }) : okJson({ id: 'citizen-001' })
-      }
-      if (url === '/api/encuestas') {
-        return okJson(storedResponses)
-      }
-      throw new Error(`URL inesperada en el test: ${url}`)
-    })
+    stubRoutes(
+      fetchMock,
+      new Map<string, FetchRoute>([
+        ['/api/barrios', () => okJson(BARRIOS_FIXTURE)],
+        [
+          '/api/encuestas',
+          (_input, init) => {
+            if ((init?.method ?? 'GET') === 'POST') {
+              return errorJson(422, { detail: 'Barrio no existe' })
+            }
+            return okJson(storedResponses)
+          },
+        ],
+      ]),
+    )
 
     render(<EncuestaPage />)
     await screen.findByRole('option', { name: 'La Esperanza' })
