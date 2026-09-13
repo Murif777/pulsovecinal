@@ -21,7 +21,8 @@ services:
     restart: unless-stopped
 
   db:
-    image: postgis/postgis:16-3.4-alpine
+    build: ./db
+    image: pulsovecinal-db:local
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-pulso}
       POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?Falta POSTGRES_PASSWORD; crea tu .env copiando db/.env.example a la raiz}"
@@ -30,7 +31,6 @@ services:
       - "${DB_PORT:-5433}:5432"          # 5433 en el host para no chocar con un PG local
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ./db/init:/docker-entrypoint-initdb.d:ro   # schema + seed (solo primer arranque)
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-pulso} -d ${POSTGRES_DB:-pulsovecinal}"]
       interval: 5s
