@@ -6,7 +6,7 @@
 
 PulsoVecinal es una plataforma de encuestas ciudadanas georreferenciadas para priorizar las necesidades barriales de **Valledupar, Colombia**. Los habitantes reportan problemas de su barrio (seguridad, alcantarillado, energía, vías, espacios públicos), indican qué tan urgente es cada uno, y la plataforma concentra esa información en un mapa interactivo y un dashboard de criticidad para que la voz de la comunidad oriente las decisiones locales.
 
-> ⚠️ **Estado actual**: arquitectura de tres capas con imágenes Docker separadas. La SPA (`/encuesta`, `/mapa`, `/dashboard`) sigue leyendo mock + `localStorage`. La API (`backend/`) y PostgreSQL + PostGIS (`db/`) ya están contenerizadas; el front aún no consume la API.
+> ⚠️ **Estado actual**: el mapa interactivo (`/mapa`) ya está implementado con Leaflet + OpenStreetMap, el formulario de encuestas (`/encuesta`) está conectado a la capa de datos y el dashboard de criticidad (`/dashboard`) ya muestra KPIs, ranking de barrios, gráficas y filtro por comuna, protegido por un login de demostración (`/login`). Los datos provienen de una capa mock (`src/lib/mockData.ts`) más los reportes ciudadanos guardados en `localStorage` desde `/encuesta`, que el mapa y el dashboard integran automáticamente (el dashboard los incluye por defecto). Sin backend ni base de datos todavía.
 
 ---
 
@@ -14,16 +14,15 @@ PulsoVecinal es una plataforma de encuestas ciudadanas georreferenciadas para pr
 
 | Capa | Tecnología |
 |---|---|
-| Presentación | Vite 5 + React 18 + TypeScript 5 (SPA) |
-| Negocio | FastAPI + SQLAlchemy + psycopg (Python 3.12) |
-| Datos | PostgreSQL 16 + PostGIS 3.4 |
+| Build / SPA | Vite 5 + React 18 |
+| Lenguaje | TypeScript 5 (strict) |
 | Estilos | Tailwind CSS 3.4 |
 | Routing | React Router DOM 6 |
-| Tests | Vitest 3 (SPA) + pytest (API) |
+| Tests | Vitest 3 + Testing Library + jsdom |
 | Lint / tipos | ESLint 9 (typescript-eslint) + `tsc -b` |
 | Node | LTS 22 (`.nvmrc` + `engines`) |
-| CI | GitHub Actions: SPA y API por separado |
-| Contenedores | Tres imágenes: `web` (nginx), `api` (uvicorn), `db` (PostGIS) |
+| CI | GitHub Actions: lint + typecheck + build + test |
+| Contenedor | Docker multi-stage: Node 22 (build) → nginx 1.27 |
 
 ## Cómo correr el proyecto localmente
 
@@ -56,23 +55,12 @@ npm run lint && npm run typecheck && npm run build && npm run test
 Requisito: **Docker Desktop** (motor en marcha).
 
 ```bash
-# Tres servicios, tres imágenes (hace falta .env con POSTGRES_PASSWORD; ver db/.env.example)
 docker compose up --build
 ```
 
-- SPA: http://localhost:8080  
-- API: http://localhost:8000 (`/docs` y `/health`)  
-- PostgreSQL: `localhost:5433` (solo en el host; la API usa el hostname `db`)
+La app queda en http://localhost:8080 (nginx sirve el build de Vite; las rutas de React Router caen en `index.html`).
 
-Cada capa se construye sola:
-
-```bash
-docker compose up --build web          # solo frontend
-docker compose up --build -d db api    # datos + negocio
-docker build -t pulsovecinal-api:local ./backend
-```
-
-Equivalente de la SPA sin Compose:
+Equivalente sin Compose:
 
 ```bash
 docker build -t pulsovecinal:local .
@@ -95,14 +83,11 @@ Cada push a `main` reconstruye y publica esa imagen (`latest` y el SHA del commi
 
 ```
 pulsovecinal/
-├── .github/workflows/ci.yml              ← CI de la SPA
-├── .github/workflows/backend.yml         ← CI de la API
-├── .github/workflows/docker-publish.yml  ← push a main → imagen del front en Docker Hub
-├── Dockerfile                     ← imagen de la SPA (Vite → nginx)
-├── docker-compose.yml             ← web + api + db (imágenes independientes)
+├── .github/workflows/ci.yml              ← CI: lint + typecheck + build + test
+├── .github/workflows/docker-publish.yml  ← push a main → imagen en Docker Hub
+├── Dockerfile                     ← imagen multi-stage (Vite → nginx)
+├── docker-compose.yml             ← `docker compose up --build` → :8080
 ├── nginx.conf                     ← SPA fallback + gzip
-├── backend/                       ← capa de negocio (FastAPI, imagen propia)
-├── db/                            ← capa de datos (schema + seed PostGIS)
 ├── src/
 │   ├── App.tsx                    ← router compartido (congelado tras S2)
 │   ├── components/
