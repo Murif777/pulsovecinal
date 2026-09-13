@@ -4,6 +4,8 @@ services:
     image: pulsovecinal:local
     ports:
       - "8080:80"
+    depends_on:
+      - backend
     restart: unless-stopped
 
   backend:
