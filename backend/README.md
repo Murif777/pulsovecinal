@@ -40,6 +40,9 @@ curl http://localhost:8000/api/auth/me -H "Authorization: Bearer <TOKEN>"
 
 Usuario demo del seed: `analista` / `pulso2026`.
 
+Cada push a `main` publica `miguecaramirez/pulsovecinal-backend` en Docker Hub
+(`latest` y el SHA), con los secrets `DOCKERHUB_USERNAME` y `DOCKERHUB_TOKEN`.
+
 ## Tests (sin PostgreSQL)
 
 ```bash

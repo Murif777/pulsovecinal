@@ -73,18 +73,24 @@ Desde Docker Hub (sin clonar el repo):
 
 ```bash
 docker run --rm -p 8080:80 miguecaramirez/pulsovecinal:latest
+docker run --rm -p 8000:8000 miguecaramirez/pulsovecinal-backend:latest
+docker run --rm -p 5433:5432 -e POSTGRES_USER=pulso -e POSTGRES_PASSWORD=TU_PASSWORD -e POSTGRES_DB=pulsovecinal miguecaramirez/pulsovecinal-db:latest
 ```
 
-Imagen: [miguecaramirez/pulsovecinal](https://hub.docker.com/r/miguecaramirez/pulsovecinal)
+| Capa | Imagen |
+|---|---|
+| Front | [miguecaramirez/pulsovecinal](https://hub.docker.com/r/miguecaramirez/pulsovecinal) |
+| Back | [miguecaramirez/pulsovecinal-backend](https://hub.docker.com/r/miguecaramirez/pulsovecinal-backend) |
+| BD | [miguecaramirez/pulsovecinal-db](https://hub.docker.com/r/miguecaramirez/pulsovecinal-db) |
 
-Cada push a `main` reconstruye y publica esa imagen (`latest` y el SHA del commit) con GitHub Actions. Hay que definir en el repo los secrets `DOCKERHUB_USERNAME` y `DOCKERHUB_TOKEN` (Settings → Secrets and variables → Actions). El token se crea en Docker Hub: Account Settings → Personal access tokens.
+Cada push a `main` reconstruye y publica las tres (`latest` y el SHA del commit) con GitHub Actions. Hay que definir en el repo los secrets `DOCKERHUB_USERNAME` y `DOCKERHUB_TOKEN` (Settings → Secrets and variables → Actions). El token se crea en Docker Hub: Account Settings → Personal access tokens.
 
 ## Estructura del proyecto
 
 ```
 pulsovecinal/
 ├── .github/workflows/ci.yml              ← CI: lint + typecheck + build + test
-├── .github/workflows/docker-publish.yml  ← push a main → imagen en Docker Hub
+├── .github/workflows/docker-publish.yml  ← push a main → imágenes front, back y db en Hub
 ├── Dockerfile                     ← imagen multi-stage (Vite → nginx)
 ├── docker-compose.yml             ← `docker compose up --build` → :8080
 ├── nginx.conf                     ← SPA fallback + gzip

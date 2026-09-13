@@ -56,7 +56,11 @@ primer arranque (volumen vacío) PostgreSQL ejecuta `/docker-entrypoint-initdb.d
 
 ## Publicar la imagen en Docker Hub
 
-Con Docker Desktop abierto y `docker login` hecho:
+Tras mergear a `main`, GitHub Actions construye y sube
+`miguecaramirez/pulsovecinal-db` (`latest` y el SHA) con los mismos secrets
+que el front (`DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`).
+
+A mano, con Docker Desktop abierto y `docker login` hecho:
 
 ```powershell
 cd C:\Users\great\Desktop\pulsovecinal
