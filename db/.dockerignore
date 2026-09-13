@@ -1,0 +1,5 @@
+checks
+README.md
+.env
+.env.*
+.env.example
