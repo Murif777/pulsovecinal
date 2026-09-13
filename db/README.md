@@ -10,6 +10,8 @@ almacén de datos (el frontend solo conserva el token JWT de sesión).
 
 ```
 db/
+├── Dockerfile                 ← imagen propia (PostGIS + schema + seed)
+├── .dockerignore
 ├── init/
 │   ├── 01-schema.sql          ← extensión PostGIS + tipos ENUM + 4 tablas + índices
 │   └── 02-seed.sql            ← 6 comunas + 15 barrios (geom) + 20 respuestas + 1 usuario
@@ -39,18 +41,36 @@ El archivo `.env` **no se versiona** — las credenciales nunca entran al repo.
 **Paso 2 — levanta el servicio:**
 
 ```bash
-docker compose up -d db        # levanta SOLO el servicio db
-docker compose ps              # → db debe quedar en estado "healthy"
+docker compose up -d --build db   # construye pulsovecinal-db:local y la levanta
+docker compose ps                 # → db debe quedar "healthy"
 ```
 
-En el primer arranque (volumen vacío) el contenedor ejecuta automáticamente
-`db/init/01-schema.sql` y `db/init/02-seed.sql` (en orden alfabético). El
-resultado: 4 tablas (`comunas`, `barrios`, `survey_responses`, `usuarios`),
-PostGIS activo y el seed de Valledupar cargado.
+Compose ya no monta `db/init`: esos SQL van **dentro de la imagen**. En el
+primer arranque (volumen vacío) PostgreSQL ejecuta `/docker-entrypoint-initdb.d/`
+(schema + seed). El resultado: 4 tablas (`comunas`, `barrios`,
+`survey_responses`, `usuarios`), PostGIS activo y el seed de Valledupar.
 
 > ⚠️ **Los scripts de init solo corren con el volumen vacío.** Si cambias el
-> esquema o el seed después del primer arranque, los cambios NO se aplican
-> solos: hay que resetear (ver [Resetear](#resetear-la-base-de-datos)).
+> esquema o el seed, reconstruye la imagen y resetea el volumen (ver
+> [Resetear](#resetear-la-base-de-datos)).
+
+## Publicar la imagen en Docker Hub
+
+Con Docker Desktop abierto y `docker login` hecho:
+
+```powershell
+cd C:\Users\great\Desktop\pulsovecinal
+docker build -t miguecaramirez/pulsovecinal-db:latest ./db
+docker push miguecaramirez/pulsovecinal-db:latest
+```
+
+Quien no tenga el repo puede bajarla (la contraseña sigue yendo por entorno;
+nunca va en la imagen):
+
+```powershell
+docker pull miguecaramirez/pulsovecinal-db:latest
+docker run --rm -d --name pulso-db -e POSTGRES_USER=pulso -e POSTGRES_PASSWORD=TU_PASSWORD -e POSTGRES_DB=pulsovecinal -p 5433:5432 miguecaramirez/pulsovecinal-db:latest
+```
 
 ## Conectar
 
@@ -113,8 +133,8 @@ docker compose exec db psql -U pulso -d pulsovecinal -c "SELECT nombre, ST_AsTex
 > para desarrollo.
 
 ```bash
-docker compose down -v         # borra el contenedor Y el volumen
-docker compose up -d db        # vuelve a ejecutar schema + seed desde cero
+docker compose down -v              # borra el contenedor Y el volumen
+docker compose up -d --build db     # reconstruye la imagen y vuelve a sembrar
 ```
 
 Sin `-v`, `docker compose down` + `up` conserva los datos (el volumen persiste).
@@ -125,7 +145,7 @@ Sin `-v`, `docker compose down` + `up` conserva los datos (el volumen persiste).
 |---|---|
 | `docker compose up` falla con "Falta POSTGRES_PASSWORD…" | No existe `.env` en la raíz: créalo desde la plantilla (`Copy-Item db\.env.example .env`) y asigna un valor a `POSTGRES_PASSWORD`. |
 | `docker compose up -d db` no queda `healthy` | Revisa los logs: `docker compose logs db`. El healthcheck usa `pg_isready -U pulso -d pulsovecinal`. |
-| Los cambios en `db/init/*.sql` no se aplican | El volumen ya tiene datos: los init scripts solo corren en el primer arranque. Resetea con `docker compose down -v` (¡pierde datos!). |
+| Los cambios en `db/init/*.sql` no se aplican | Hay que **reconstruir** la imagen (`docker compose build db`) y, si el volumen ya existía, resetear con `docker compose down -v` (¡pierde datos!). |
 | Puerto 5433 ocupado en el host | Cambia `DB_PORT` en tu `.env` (raíz del repo) o define la variable de entorno `DB_PORT`. |
 | El backend no conecta | Verifica que use el DSN con hostname `db` (red interna de compose) y `depends_on: db (condition: service_healthy)`. |
 | Acentos raros en los datos | Los `.sql` deben estar en UTF-8 sin BOM; la imagen ya usa `client_encoding=UTF8`. |
