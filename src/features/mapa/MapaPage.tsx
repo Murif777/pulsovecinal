@@ -1,8 +1,7 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
-import { getMapReports, mockSurveyResponses } from '../../lib/mockData'
-import { loadSurveyResponses } from '../../lib/surveyStorage'
-import type { ComplaintCategory, Severity } from '../../lib/types'
+import { getMapReports } from '../../lib/api'
+import type { ComplaintCategory, MapReport, Severity } from '../../lib/types'
 import FilterBar from './FilterBar'
 import Legend from './Legend'
 import MapaView from './MapaView'
@@ -45,22 +44,39 @@ function SummaryBadge({ icon, children }: SummaryBadgeProps) {
 
 /**
  * /mapa page: interactive criticality map of Valledupar barrios.
- * Owns the filter state and derives the rendered markers through the pure
- * helpers: getMapReports -> filterReports -> aggregateByBarrio -> MapaView.
+ * Consumes the aggregated reports of GET /api/mapa/reportes (the backend
+ * already merges citizen submissions) and derives the rendered markers
+ * through the pure helpers: reports -> filterReports -> aggregateByBarrio.
  */
 export default function MapaPage() {
   const [selectedCategories, setSelectedCategories] = useState<readonly ComplaintCategory[]>([])
   const [selectedSeverities, setSelectedSeverities] = useState<readonly Severity[]>([])
   const [selectedComunas, setSelectedComunas] = useState<readonly string[]>([])
 
-  // Citizen registrations saved by /encuesta in this browser. Loaded once per
-  // mount: a page refresh picks up new registrations (no live subscription).
-  const citizenResponses = useMemo(() => loadSurveyResponses(), [])
+  const [reports, setReports] = useState<MapReport[]>([])
+  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading')
+  const [retryKey, setRetryKey] = useState(0)
 
-  const reports = useMemo(
-    () => getMapReports([...mockSurveyResponses, ...citizenResponses]),
-    [citizenResponses],
-  )
+  useEffect(() => {
+    let cancelled = false
+    setStatus('loading')
+    getMapReports()
+      .then((items) => {
+        if (cancelled) {
+          return
+        }
+        setReports(items)
+        setStatus('ready')
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setStatus('error')
+        }
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [retryKey])
 
   const comunaOptions = useMemo(
     () => [...new Set(reports.map((report) => report.comuna))].sort((a, b) => a.localeCompare(b)),
@@ -148,32 +164,55 @@ export default function MapaPage() {
         />
       </div>
       <div className="relative mt-4">
-        <MapaView markers={markers} />
-        <Legend />
-        {markers.length === 0 && (
-          <div
-            role="status"
-            className="absolute inset-0 z-[1100] flex items-center justify-center p-6"
-          >
-            <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white/95 p-6 text-center shadow-xl shadow-slate-900/10 backdrop-blur">
-              <span aria-hidden="true" className="text-4xl">
-                🤔
-              </span>
-              <h2 className="mt-3 text-lg font-bold text-slate-900">
-                No hay barrios con esos filtros
-              </h2>
-              <p className="mt-1 text-sm leading-6 text-slate-500">
-                Prueba con otra combinación de categorías, severidades o comunas.
-              </p>
-              <button
-                type="button"
-                onClick={clearFilters}
-                className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-teal-700 px-4 py-2 text-sm font-semibold text-white transition-colors duration-150 hover:bg-teal-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600"
-              >
-                Limpiar filtros
-              </button>
-            </div>
+        {status === 'loading' ? (
+          <div className="flex h-96 items-center justify-center rounded-2xl border border-slate-200 bg-white">
+            <p role="status" className="text-sm text-slate-600">
+              Cargando mapa…
+            </p>
           </div>
+        ) : status === 'error' ? (
+          <div className="flex h-96 flex-col items-center justify-center gap-3 rounded-2xl border border-red-200 bg-red-50 px-6 text-center">
+            <p role="alert" className="text-sm text-red-800">
+              No se pudieron cargar los reportes del mapa.
+            </p>
+            <button
+              type="button"
+              onClick={() => setRetryKey((key) => key + 1)}
+              className="inline-flex items-center gap-1 rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-medium text-red-700 transition hover:bg-red-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600"
+            >
+              Reintentar mapa
+            </button>
+          </div>
+        ) : (
+          <>
+            <MapaView markers={markers} />
+            <Legend />
+            {markers.length === 0 && (
+              <div
+                role="status"
+                className="absolute inset-0 z-[1100] flex items-center justify-center p-6"
+              >
+                <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white/95 p-6 text-center shadow-xl shadow-slate-900/10 backdrop-blur">
+                  <span aria-hidden="true" className="text-4xl">
+                    🤔
+                  </span>
+                  <h2 className="mt-3 text-lg font-bold text-slate-900">
+                    No hay barrios con esos filtros
+                  </h2>
+                  <p className="mt-1 text-sm leading-6 text-slate-500">
+                    Prueba con otra combinación de categorías, severidades o comunas.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={clearFilters}
+                    className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-teal-700 px-4 py-2 text-sm font-semibold text-white transition-colors duration-150 hover:bg-teal-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600"
+                  >
+                    Limpiar filtros
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
     </section>

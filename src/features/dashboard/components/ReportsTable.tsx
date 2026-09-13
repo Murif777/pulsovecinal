@@ -7,11 +7,6 @@ function formatDay(iso: string): string {
   return `${day}/${month}/${year}`
 }
 
-const SOURCE_LABEL = {
-  mock: 'Mock',
-  ciudadano: 'Ciudadano',
-} as const
-
 type Column = {
   key: ReportSortKey
   label: string
@@ -83,9 +78,6 @@ export default function ReportsTable({
                 </button>
               </th>
             ))}
-            <th scope="col" className="px-4 py-3 font-semibold">
-              Origen
-            </th>
           </tr>
         </thead>
         <tbody>
@@ -106,17 +98,6 @@ export default function ReportsTable({
                     style={{ backgroundColor: SEVERITY_COLORS[row.severity] }}
                   >
                     {SEVERITY_LABELS[row.severity]}
-                  </span>
-                </td>
-                <td className="px-4 py-3">
-                  <span
-                    className={
-                      row.source === 'ciudadano'
-                        ? 'rounded-full bg-violet-50 px-2 py-0.5 text-[11px] font-semibold text-violet-700'
-                        : 'rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600'
-                    }
-                  >
-                    {SOURCE_LABEL[row.source]}
                   </span>
                 </td>
               </tr>

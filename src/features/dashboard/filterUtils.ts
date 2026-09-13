@@ -4,8 +4,9 @@ import { SEVERITY_LABELS } from './dashboardUtils'
 
 /**
  * Active dashboard filters. Empty arrays mean "no filter for this group"
- * (AND semantics across groups, OR within a group). `includeCitizen` is a
- * data-source toggle, not a row filter — applyFilters ignores it.
+ * (AND semantics across groups, OR within a group). Every group is a row
+ * filter over the API responses — there is no client-side data-source toggle
+ * anymore: citizen reports are already merged server-side.
  */
 export interface DashboardFilters {
   readonly search: string
@@ -16,7 +17,6 @@ export interface DashboardFilters {
   readonly from: string | null
   /** Inclusive end date as YYYY-MM-DD, or null for no upper bound. */
   readonly to: string | null
-  readonly includeCitizen: boolean
 }
 
 export const EMPTY_FILTERS: DashboardFilters = {
@@ -26,9 +26,6 @@ export const EMPTY_FILTERS: DashboardFilters = {
   severities: [],
   from: null,
   to: null,
-  // Citizen reports are part of the default dataset: the dashboard shows
-  // everything the browser has, and the toggle only hides them.
-  includeCitizen: true,
 }
 
 export type DatePreset = '7d' | '15d' | 'all'
@@ -85,7 +82,7 @@ export function applyFilters<T extends SurveyResponse>(
 
 /**
  * How many filter groups are currently active (search, comuna, category,
- * severity, date range, citizen source). Used by the panel badge.
+ * severity, date range). Used by the panel badge.
  */
 export function activeFilterCount(filters: DashboardFilters): number {
   let count = 0
@@ -102,9 +99,6 @@ export function activeFilterCount(filters: DashboardFilters): number {
     count += 1
   }
   if (filters.from !== null || filters.to !== null) {
-    count += 1
-  }
-  if (filters.includeCitizen) {
     count += 1
   }
   return count
@@ -155,7 +149,7 @@ export interface ActiveFilterChip {
 
 /**
  * Builds removable chips for the active-filter strip above the views.
- * `includeCitizen` is rendered as a source chip; date bounds as a single chip.
+ * Date bounds render as a single chip.
  */
 export function activeFilterChips(filters: DashboardFilters): ActiveFilterChip[] {
   const chips: ActiveFilterChip[] = []
@@ -177,9 +171,6 @@ export function activeFilterChips(filters: DashboardFilters): ActiveFilterChip[]
     const to = filters.to ?? '…'
     chips.push({ key: 'period', label: `Periodo: ${from} → ${to}` })
   }
-  if (filters.includeCitizen) {
-    chips.push({ key: 'citizen', label: 'Incluye reportes ciudadanos' })
-  }
   return chips
 }
 
@@ -190,9 +181,6 @@ export function removeFilterChip(filters: DashboardFilters, key: string): Dashbo
   }
   if (key === 'period') {
     return { ...filters, from: null, to: null }
-  }
-  if (key === 'citizen') {
-    return { ...filters, includeCitizen: false }
   }
   if (key.startsWith('comuna:')) {
     const value = key.slice('comuna:'.length)

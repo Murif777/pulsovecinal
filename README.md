@@ -6,7 +6,7 @@
 
 PulsoVecinal es una plataforma de encuestas ciudadanas georreferenciadas para priorizar las necesidades barriales de **Valledupar, Colombia**. Los habitantes reportan problemas de su barrio (seguridad, alcantarillado, energía, vías, espacios públicos), indican qué tan urgente es cada uno, y la plataforma concentra esa información en un mapa interactivo y un dashboard de criticidad para que la voz de la comunidad oriente las decisiones locales.
 
-> ⚠️ **Estado actual**: el mapa interactivo (`/mapa`) ya está implementado con Leaflet + OpenStreetMap, el formulario de encuestas (`/encuesta`) está conectado a la capa de datos y el dashboard de criticidad (`/dashboard`) ya muestra KPIs, ranking de barrios, gráficas y filtro por comuna, protegido por un login de demostración (`/login`). Los datos provienen de una capa mock (`src/lib/mockData.ts`) más los reportes ciudadanos guardados en `localStorage` desde `/encuesta`, que el mapa y el dashboard integran automáticamente (el dashboard los incluye por defecto). Sin backend ni base de datos todavía.
+> ⚠️ **Estado actual**: el mapa interactivo (`/mapa`) está implementado con Leaflet + OpenStreetMap, el formulario de encuestas (`/encuesta`) consume la API real y el dashboard de criticidad (`/dashboard`) muestra KPIs, ranking de barrios, gráficas y filtros por comuna/categoría/severidad, protegido por un login de demostración (`/login`: `analista` / `pulso2026`). Arquitectura de 3 capas: el frontend consume el backend **FastAPI** (`/api`), que persiste en **PostgreSQL + PostGIS** (`db/`); el navegador solo conserva el token JWT de sesión.
 
 ---
 
@@ -23,6 +23,8 @@ PulsoVecinal es una plataforma de encuestas ciudadanas georreferenciadas para pr
 | Node | LTS 22 (`.nvmrc` + `engines`) |
 | CI | GitHub Actions: lint + typecheck + build + test |
 | Contenedor | Docker multi-stage: Node 22 (build) → nginx 1.27 |
+| API (backend/) | FastAPI — contrato congelado en `/api` |
+| Base de datos (db/) | PostgreSQL 16 + PostGIS 3.4 |
 
 ## Cómo correr el proyecto localmente
 
@@ -32,6 +34,8 @@ Requisitos: **Node.js 22** (o superior) y npm.
 npm install        # instalar dependencias
 npm run dev        # servidor de desarrollo → http://localhost:5173
 ```
+
+> ℹ️ El servidor de desarrollo proxya `/api` hacia el backend (`http://localhost:8000`). Para levantar la API y la base de datos ver [Cómo correr con Docker](#cómo-correr-con-docker) o el [README del backend](backend/README.md).
 
 Scripts disponibles:
 
@@ -54,11 +58,13 @@ npm run lint && npm run typecheck && npm run build && npm run test
 
 Requisito: **Docker Desktop** (motor en marcha).
 
+> ⚠️ Antes del primer `docker compose up`, crea el `.env` desde la plantilla (`Copy-Item db\.env.example .env`) y asigna `POSTGRES_PASSWORD` (ver [db/README.md](db/README.md)).
+
 ```bash
 docker compose up --build
 ```
 
-La app queda en http://localhost:8080 (nginx sirve el build de Vite; las rutas de React Router caen en `index.html`).
+La app queda en http://localhost:8080 (nginx sirve el build de Vite; las rutas de React Router caen en `index.html` y `/api` se proxya al backend). Compose levanta las tres capas: `web` (nginx → :8080), `backend` (FastAPI → :8000, Swagger en http://localhost:8000/docs) y `db` (PostgreSQL + PostGIS → :5433).
 
 Equivalente sin Compose:
 
@@ -92,8 +98,10 @@ pulsovecinal/
 ├── .github/workflows/ci.yml              ← CI: lint + typecheck + build + test
 ├── .github/workflows/docker-publish.yml  ← push a main → imágenes front, back y db en Hub
 ├── Dockerfile                     ← imagen multi-stage (Vite → nginx)
-├── docker-compose.yml             ← `docker compose up --build` → :8080
-├── nginx.conf                     ← SPA fallback + gzip
+├── docker-compose.yml             ← `docker compose up --build` → web :8080 + backend :8000 + db :5433
+├── nginx.conf                     ← SPA fallback + proxy `/api` → backend:8000
+├── backend/                       ← API FastAPI (contrato `/api`) — ver backend/README.md
+├── db/                            ← PostgreSQL 16 + PostGIS (schema + seed) — ver db/README.md
 ├── src/
 │   ├── App.tsx                    ← router compartido (congelado tras S2)
 │   ├── components/
@@ -105,34 +113,47 @@ pulsovecinal/
 │   │   ├── mapa/                  ← Integrante B → /mapa
 │   │   └── dashboard/             ← Integrante C → /dashboard
 │   ├── lib/
+│   │   ├── api.ts                 ← cliente de la API (`/api`): apiGet/apiPost + sesión 401
 │   │   ├── types.ts               ← contratos TS compartidos
-│   │   ├── mockData.ts            ← datos mock de Valledupar + agregadores
-│   │   ├── surveyStorage.ts       ← persistencia localStorage de encuestas (compartido)
+│   │   ├── mockData.ts            ← fixtures espejo del backend + agregadores (tests)
 │   │   └── __tests__/             ← tests unitarios de la capa de datos
 │   └── __tests__/                 ← smoke tests de rutas
 └── index.html
 ```
 
-## Flujo de datos
+## Flujo de datos (front ↔ API)
 
-Sin backend todavía, los datos viven en dos capas del navegador:
-
-1. **Dataset mock** (`src/lib/mockData.ts`): 20 respuestas de referencia de Valledupar, la base con la que arrancan el mapa y el dashboard.
-2. **Reportes ciudadanos** (`localStorage`): cada envío del formulario `/encuesta` se persiste en la clave `pulsovecinal.surveyResponses` a través de `src/lib/surveyStorage.ts`, el módulo compartido de persistencia (validación de payloads corruptos + derivación de comuna). `/encuesta` escribe; `/mapa` y `/dashboard` leen.
+Arquitectura de 3 capas: el frontend (React) consume la API **FastAPI** (`/api`), que persiste en **PostgreSQL + PostGIS**. El navegador no guarda datos de dominio: solo conserva el token JWT de sesión.
 
 ```
-/encuesta (formulario)
-   │  appendSurveyResponse() → localStorage['pulsovecinal.surveyResponses']
-   ▼
-src/lib/surveyStorage.ts   ← fuente única de persistencia
-   │
-   ├──► /mapa      getMapReports([...mock, ...ciudadanos]) → marcadores extra
-   └──► /dashboard mergeResponses(mock, includeCitizen)    → KPIs / ranking / gráficas
+                 /encuesta        /mapa        /dashboard
+                     │              │               │
+                     ▼              ▼               ▼
+               src/lib/api.ts  ← cliente único (base `/api`)
+                     │
+   nginx (prod :8080) / Vite (dev :5173) proxyan `/api` sin rewrite
+                     │
+                     ▼
+            backend FastAPI (:8000, host `backend`)
+                     │
+                     ▼
+     PostgreSQL + PostGIS (`db`)      ← fuente de verdad
 ```
 
-- El **mapa** fusiona los reportes ciudadanos con el dataset mock al montar la página; un refresh recoge los nuevos registros.
-- El **dashboard** incluye los reportes ciudadanos **por defecto** (`EMPTY_FILTERS.includeCitizen = true`); el toggle "Incluir reportes ciudadanos" del panel solo los oculta.
-- `src/features/encuesta/storage.ts` es un shim que re-exporta `src/lib/surveyStorage.ts` para mantener intacta la superficie pública de la feature.
+Endpoints consumidos por el front:
+
+| Endpoint | Uso |
+|---|---|
+| `POST /api/auth/login` | Login demo (`analista` / `pulso2026`) → `{ token, usuario }` |
+| `GET /api/barrios` | Catálogo territorial del formulario `/encuesta` |
+| `POST /api/encuestas` | Registra un reporte ciudadano (201) |
+| `GET /api/encuestas` | Lista de reportes del formulario |
+| `GET /api/mapa/reportes` | Reportes agregados del mapa |
+| `GET /api/dashboard/resumen` | KPIs, ranking y gráficas del dashboard |
+
+- El **dashboard** aplica los filtros (comuna/categoría/severidad) en cliente sobre el resumen y los reportes obtenidos de la API.
+- Un **401** de cualquier endpoint limpia la sesión y redirige a `/login` (`src/lib/api.ts`).
+- `src/lib/mockData.ts` ya no alimenta la UI: queda como fixture espejo del seed del backend para los tests (agregadores `getMapReports` / `getDashboardSummary`).
 
 **Convención de idioma**: la UI está en español; identificadores, comentarios y nombres de archivo en inglés.
 
@@ -197,7 +218,8 @@ Para el Integrante A usa `feat/encuesta` y `src/features/encuesta/`; para el Int
   - [x] Dashboard con gráficas y ranking de criticidad (C): KPIs, ranking de barrios más críticos, distribución por categoría/severidad (recharts), filtro por comuna y login simulado en `/login` (demo académica — **no es seguridad real**).
 - [x] **Fase 2 — Dockerización**: `Dockerfile` multi-stage (build Vite → nginx), `docker compose up --build` e imagen en Docker Hub: `miguecaramirez/pulsovecinal`.
 - [x] **Fase 3 — Demo con Docker**: `docker run --rm -p 8080:80 miguecaramirez/pulsovecinal:latest`.
-- [ ] **Fase futura**: backend/API real y base de datos, reemplazando la capa mock.
+- [x] **Fase 4 — Backend y base de datos**: API FastAPI en `backend/` (contrato congelado en `/api`) y PostgreSQL 16 + PostGIS en `db/`. El front consume la API; el almacenamiento en `localStorage` fue reemplazado (el navegador solo conserva el token JWT).
+- [ ] **Fase futura**: ampliaciones sobre la base actual (roles reales, moderación de reportes, exportación de datos).
 
 ## Licencia
 

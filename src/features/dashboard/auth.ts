@@ -1,23 +1,22 @@
+import { apiPost, SESSION_STORAGE_KEY } from '../../lib/api'
+import type { ApiLoginResponse, ApiUser } from '../../lib/api'
+
 /**
- * Simulated session helpers for the /dashboard demo gate.
+ * Session helpers for the /dashboard gate, backed by the real API.
  *
- * DEMO ONLY — this is an academic demonstration, NOT real security: fixed
- * credentials checked in the browser and a session persisted in localStorage.
- * There is no backend, no JWT and no server-side session by design (see the
- * README). Do not use this pattern in production.
+ * `login` posts the credentials to POST /api/auth/login; on success the
+ * returned JWT + profile are persisted in localStorage under
+ * `pulsovecinal.session` so every later request attaches the Bearer token.
+ * A 401 raised by the API client already clears the session, so guards
+ * redirect to /login.
  */
 
-export const SESSION_STORAGE_KEY = 'pulsovecinal.session'
-
-/** Fixed demo credentials, shown as a hint on the login page. */
-export const DEMO_CREDENTIALS = {
-  username: 'analista',
-  password: 'pulso2026',
-} as const
+export { SESSION_STORAGE_KEY }
 
 /** Shape of a persisted session. */
 export interface Session {
-  readonly username: string
+  readonly token: string
+  readonly usuario: ApiUser
   /** ISO 8601 timestamp of when the session was created. */
   readonly loggedInAt: string
 }
@@ -31,7 +30,14 @@ export function isSession(value: unknown): value is Session {
   if (!isRecord(value)) {
     return false
   }
-  if (typeof value.username !== 'string' || value.username.length === 0) {
+  if (typeof value.token !== 'string' || value.token.length === 0) {
+    return false
+  }
+  const usuario = value.usuario
+  if (!isRecord(usuario)) {
+    return false
+  }
+  if (typeof usuario.id !== 'number' || typeof usuario.usuario !== 'string') {
     return false
   }
   if (typeof value.loggedInAt !== 'string' || value.loggedInAt.length === 0) {
@@ -65,16 +71,19 @@ export function isAuthenticated(): boolean {
 }
 
 /**
- * Validates the demo credentials and persists the session on success.
- * Returns false (without writing anything) when the credentials are wrong.
+ * Authenticates against the real API and persists the session on success.
+ * Rejects with the ApiError raised by the client (401 + backend detail)
+ * when the credentials are wrong.
  */
-export function login(username: string, password: string): boolean {
-  if (username !== DEMO_CREDENTIALS.username || password !== DEMO_CREDENTIALS.password) {
-    return false
+export async function login(usuario: string, contrasena: string): Promise<ApiLoginResponse> {
+  const response = await apiPost<ApiLoginResponse>('/auth/login', { usuario, contrasena })
+  const session: Session = {
+    token: response.token,
+    usuario: response.usuario,
+    loggedInAt: new Date().toISOString(),
   }
-  const session: Session = { username, loggedInAt: new Date().toISOString() }
   getLocalStorage().setItem(SESSION_STORAGE_KEY, JSON.stringify(session))
-  return true
+  return response
 }
 
 /** Clears the stored session. */

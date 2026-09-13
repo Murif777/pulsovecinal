@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { ALL_CATEGORIES, ALL_SEVERITIES, CATEGORY_LABELS } from '../../lib/types'
 import type { ComplaintCategory, Severity } from '../../lib/types'
-import { BARRIOS } from './barrios'
+import type { BarrioInfo } from '../../lib/api'
 import { SEVERITY_LABELS } from './labels'
 
 export type SurveyFormValues = {
@@ -12,7 +12,13 @@ export type SurveyFormValues = {
 }
 
 type SurveyFormProps = {
-  onSubmitted: (values: SurveyFormValues) => void
+  /** Barrio registry from GET /api/barrios; null while it is loading. */
+  barrios: readonly BarrioInfo[] | null
+  barriosError: boolean
+  onRetryBarrios: () => void
+  submitting: boolean
+  /** Resolves true when the report was persisted by the API. */
+  onSubmitted: (values: SurveyFormValues) => Promise<boolean>
 }
 
 type FieldName = 'barrio' | 'category' | 'severity' | 'description'
@@ -73,26 +79,36 @@ function FieldLabel({
 }
 
 /** Citizen survey form: barrio, category, urgency and description are all required. */
-export default function SurveyForm({ onSubmitted }: SurveyFormProps) {
+export default function SurveyForm({
+  barrios,
+  barriosError,
+  onRetryBarrios,
+  submitting,
+  onSubmitted,
+}: SurveyFormProps) {
   const [values, setValues] = useState(EMPTY_FORM)
   const [errors, setErrors] = useState<FieldErrors>({})
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const nextErrors = validate(values)
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors)
       return
     }
-    onSubmitted({
+    const saved = await onSubmitted({
       barrio: values.barrio,
       category: values.category as ComplaintCategory,
       severity: values.severity as Severity,
       description: values.description.trim(),
     })
-    setValues(EMPTY_FORM)
-    setErrors({})
+    if (saved) {
+      setValues(EMPTY_FORM)
+      setErrors({})
+    }
   }
+
+  const barriosUnavailable = barrios === null || barriosError
 
   return (
     <form
@@ -121,15 +137,34 @@ export default function SurveyForm({ onSubmitted }: SurveyFormProps) {
             aria-invalid={Boolean(errors.barrio)}
             aria-describedby={errors.barrio ? 'survey-barrio-error' : undefined}
             className={errorClassName(Boolean(errors.barrio))}
+            disabled={barriosUnavailable || submitting}
             onChange={(event) => setValues((current) => ({ ...current, barrio: event.target.value }))}
           >
-            <option value="">Selecciona un barrio</option>
-            {BARRIOS.map((barrio) => (
-              <option key={barrio.name} value={barrio.name}>
-                {barrio.name}
-              </option>
-            ))}
+            <option value="">
+              {barrios === null ? 'Cargando barrios…' : 'Selecciona un barrio'}
+            </option>
+            {barrios === null
+              ? null
+              : barrios.map((barrio) => (
+                  <option key={barrio.nombre} value={barrio.nombre}>
+                    {barrio.nombre}
+                  </option>
+                ))}
           </select>
+          {barriosError ? (
+            <div className="mt-1.5 flex flex-wrap items-center gap-2">
+              <p id="survey-barrios-error" role="alert" className="text-sm text-red-700">
+                No se pudieron cargar los barrios.
+              </p>
+              <button
+                type="button"
+                onClick={onRetryBarrios}
+                className="inline-flex items-center gap-1 rounded-lg border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700 transition hover:bg-red-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600"
+              >
+                Reintentar barrios
+              </button>
+            </div>
+          ) : null}
           {errors.barrio ? (
             <p id="survey-barrio-error" role="alert" className="mt-1.5 text-sm text-red-700">
               {errors.barrio}
@@ -150,6 +185,7 @@ export default function SurveyForm({ onSubmitted }: SurveyFormProps) {
               aria-invalid={Boolean(errors.category)}
               aria-describedby={errors.category ? 'survey-category-error' : undefined}
               className={errorClassName(Boolean(errors.category))}
+              disabled={submitting}
               onChange={(event) => setValues((current) => ({ ...current, category: event.target.value }))}
             >
               <option value="">Selecciona una categoría</option>
@@ -178,6 +214,7 @@ export default function SurveyForm({ onSubmitted }: SurveyFormProps) {
               aria-invalid={Boolean(errors.severity)}
               aria-describedby={errors.severity ? 'survey-severity-error' : undefined}
               className={errorClassName(Boolean(errors.severity))}
+              disabled={submitting}
               onChange={(event) => setValues((current) => ({ ...current, severity: event.target.value }))}
             >
               <option value="">Selecciona un nivel de urgencia</option>
@@ -209,6 +246,7 @@ export default function SurveyForm({ onSubmitted }: SurveyFormProps) {
             aria-describedby={errors.description ? 'survey-description-error' : undefined}
             className={`${errorClassName(Boolean(errors.description))} max-w-full resize-y break-all`}
             placeholder="Cuéntanos qué ocurre y dónde se presenta el problema."
+            disabled={submitting}
             onChange={(event) => setValues((current) => ({ ...current, description: event.target.value }))}
           />
           {errors.description ? (
@@ -220,7 +258,8 @@ export default function SurveyForm({ onSubmitted }: SurveyFormProps) {
 
         <button
           type="submit"
-          className="inline-flex w-full items-center justify-center rounded-xl bg-teal-700 px-4 py-3 text-sm font-semibold text-white transition hover:bg-teal-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700"
+          disabled={barriosUnavailable || submitting}
+          className="inline-flex w-full items-center justify-center rounded-xl bg-teal-700 px-4 py-3 text-sm font-semibold text-white transition hover:bg-teal-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 disabled:cursor-not-allowed disabled:opacity-60"
         >
           Enviar reporte
         </button>

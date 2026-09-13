@@ -55,7 +55,6 @@ export type ControlPanelProps = {
   comunaOptions: readonly string[]
   /** Inclusive YYYY-MM-DD bounds of the unfiltered dataset, used as date input limits. */
   bounds: { readonly start: string; readonly end: string }
-  citizenCount: number
   onExportCsv: () => void
   session: { readonly username: string; readonly loggedInAt: string } | null
   onLogout: () => void
@@ -63,7 +62,7 @@ export type ControlPanelProps = {
 
 /**
  * Sticky left-hand control panel: view switcher, search, period, multi-select
- * filters, citizen-source toggle, ranking order and export.
+ * filters, ranking order and export.
  */
 export default function ControlPanel({
   view,
@@ -74,7 +73,6 @@ export default function ControlPanel({
   onRankingSortChange,
   comunaOptions,
   bounds,
-  citizenCount,
   onExportCsv,
   session,
   onLogout,
@@ -250,25 +248,6 @@ export default function ControlPanel({
             />
           ))}
         </div>
-      </PanelSection>
-
-      <PanelSection title="Fuente de datos">
-        <label className="flex cursor-pointer items-start gap-2.5 text-sm text-slate-700">
-          <input
-            type="checkbox"
-            checked={filters.includeCitizen}
-            onChange={(event) => onFiltersChange({ ...filters, includeCitizen: event.target.checked })}
-            className="mt-0.5 h-4 w-4 rounded border-slate-300 text-teal-700 focus:ring-teal-600"
-          />
-          <span>
-            Incluir reportes ciudadanos
-            <span className="mt-0.5 block text-xs text-slate-500">
-              {citizenCount === 0
-                ? 'Ninguno guardado en este navegador'
-                : `${citizenCount} ${citizenCount === 1 ? 'reporte' : 'reportes'} en localStorage`}
-            </span>
-          </span>
-        </label>
       </PanelSection>
 
       {(view === 'resumen' || view === 'barrios') && (

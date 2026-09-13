@@ -54,10 +54,6 @@ export default function ReportDetail({ row, onViewBarrio }: ReportDetailProps) {
           <dt className="text-xs text-slate-500">Fecha</dt>
           <dd className="font-medium tabular-nums text-slate-900">{formatDay(row.date)}</dd>
         </div>
-        <div>
-          <dt className="text-xs text-slate-500">Origen</dt>
-          <dd className="font-medium text-slate-900">{row.source === 'ciudadano' ? 'Ciudadano' : 'Mock'}</dd>
-        </div>
         {row.encuestador !== undefined && (
           <div className="col-span-2">
             <dt className="text-xs text-slate-500">Encuestador</dt>
