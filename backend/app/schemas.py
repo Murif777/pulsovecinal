@@ -1,8 +1,16 @@
-"""DTOs HTTP: mismos nombres de campo que `src/lib/types.ts`."""
+"""Pydantic espejo de src/lib/types.ts (camelCase via alias_generator)."""
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic.alias_generators import to_camel
 
 from app.domain import Category, Severity
+
+
+class ApiModel(BaseModel):
+    model_config = ConfigDict(
+        alias_generator=to_camel,
+        populate_by_name=True,
+    )
 
 
 class SurveyCreate(BaseModel):
@@ -11,10 +19,10 @@ class SurveyCreate(BaseModel):
     barrio: str
     category: Category
     severity: Severity
-    description: str
+    description: str | None = None
     encuestador: str | None = None
 
-    @field_validator("barrio", "description")
+    @field_validator("barrio")
     @classmethod
     def required_trim(cls, value: str) -> str:
         trimmed = value.strip()
@@ -22,7 +30,7 @@ class SurveyCreate(BaseModel):
             raise ValueError("no puede estar vacío")
         return trimmed
 
-    @field_validator("encuestador")
+    @field_validator("description", "encuestador")
     @classmethod
     def optional_trim(cls, value: str | None) -> str | None:
         if value is None:
@@ -31,7 +39,7 @@ class SurveyCreate(BaseModel):
         return trimmed or None
 
 
-class SurveyOut(BaseModel):
+class SurveyOut(ApiModel):
     id: str
     barrio: str
     comuna: str
@@ -42,15 +50,14 @@ class SurveyOut(BaseModel):
     encuestador: str | None = None
 
 
-class BarrioOut(BaseModel):
-    id: int
+class BarrioOut(ApiModel):
     nombre: str
     comuna: str
     lat: float
     lng: float
 
 
-class MapReportOut(BaseModel):
+class MapReportOut(ApiModel):
     id: str
     barrio: str
     comuna: str
@@ -59,26 +66,26 @@ class MapReportOut(BaseModel):
     category: Category
     severity: Severity
     count: int
-    lastReportedAt: str
+    last_reported_at: str
 
 
-class CriticalBarrioOut(BaseModel):
+class CriticalBarrioOut(ApiModel):
     barrio: str
     comuna: str
     score: int
-    topCategory: Category
+    top_category: Category
 
 
-class SummaryPeriodOut(BaseModel):
+class SummaryPeriodOut(ApiModel):
     start: str
     end: str
 
 
-class DashboardSummaryOut(BaseModel):
-    totalResponses: int
-    byCategory: dict[Category, int]
-    bySeverity: dict[Severity, int]
-    criticalBarrios: list[CriticalBarrioOut]
+class DashboardSummaryOut(ApiModel):
+    total_responses: int
+    by_category: dict[Category, int]
+    by_severity: dict[Severity, int]
+    critical_barrios: list[CriticalBarrioOut]
     period: SummaryPeriodOut
 
 
@@ -97,15 +104,13 @@ class LoginRequest(BaseModel):
         return trimmed
 
 
-class TokenOut(BaseModel):
-    access_token: str
-    token_type: str = "bearer"
+class UsuarioPublic(ApiModel):
+    id: int
     usuario: str
     rol: str
     nombre: str | None = None
 
 
-class UserOut(BaseModel):
-    usuario: str
-    rol: str
-    nombre: str | None = None
+class TokenOut(ApiModel):
+    token: str
+    usuario: UsuarioPublic

@@ -1,9 +1,9 @@
-"""Catálogo de barrios con coordenadas PostGIS."""
+"""GET /api/barrios."""
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from app.database import get_db
+from app.db import get_db
 from app.repositories import barrios as barrio_repo
 from app.schemas import BarrioOut
 
@@ -15,7 +15,6 @@ def list_barrios(db: Session = Depends(get_db)) -> list[BarrioOut]:
     rows = barrio_repo.list_barrios(db)
     return [
         BarrioOut(
-            id=row.id,
             nombre=row.nombre,
             comuna=row.comuna,
             lat=float(row.lat),

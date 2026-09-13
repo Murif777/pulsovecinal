@@ -1,21 +1,23 @@
-"""Autenticación de analistas: bcrypt del seed + JWT de sesión."""
+"""Autenticación: passlib/bcrypt + JWT HS256 (python-jose)."""
 
 from datetime import datetime, timedelta, timezone
 
-import bcrypt
-import jwt
+from jose import jwt
+from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
 from app.errors import UnauthorizedError
 from app.repositories import users as user_repo
-from app.schemas import TokenOut
+from app.schemas import TokenOut, UsuarioPublic
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 def verify_password(plain: str, hashed: str) -> bool:
     try:
-        return bcrypt.checkpw(plain.encode("utf-8"), hashed.encode("utf-8"))
-    except ValueError:
+        return pwd_context.verify(plain, hashed)
+    except (ValueError, TypeError):
         return False
 
 
@@ -39,10 +41,8 @@ def decode_token(token: str) -> dict:
 def login(db: Session, usuario: str, contrasena: str) -> TokenOut:
     user = user_repo.get_by_usuario(db, usuario)
     if user is None or not verify_password(contrasena, user.contrasena_hash):
-        raise UnauthorizedError("credenciales inválidas")
+        raise UnauthorizedError("Credenciales inválidas")
     return TokenOut(
-        access_token=create_access_token(user.usuario, user.rol),
-        usuario=user.usuario,
-        rol=user.rol,
-        nombre=user.nombre,
+        token=create_access_token(user.usuario, user.rol),
+        usuario=UsuarioPublic(id=user.id, usuario=user.usuario, rol=user.rol),
     )

@@ -1,10 +1,10 @@
-"""Orquestación de encuestas: valida territorio y arma el contrato del frontend."""
+"""Orquestación de encuestas y agregaciones."""
 
-from uuid import UUID
+from datetime import datetime
 
 from sqlalchemy.orm import Session
 
-from app.errors import NotFoundError
+from app.errors import UnprocessableError
 from app.iso import to_iso
 from app.models import SurveyResponse
 from app.repositories import barrios as barrio_repo
@@ -32,27 +32,26 @@ def list_surveys(
     barrio: str | None = None,
     category: str | None = None,
     severity: str | None = None,
+    comuna: str | None = None,
+    from_dt: datetime | None = None,
+    to_dt: datetime | None = None,
 ) -> list[SurveyOut]:
     rows = survey_repo.list_responses(
         db,
         barrio=barrio,
         categoria=category,
         severidad=severity,
+        comuna=comuna,
+        from_dt=from_dt,
+        to_dt=to_dt,
     )
     return [to_survey_out(row) for row in rows]
-
-
-def get_survey(db: Session, response_id: UUID) -> SurveyOut:
-    row = survey_repo.get_response(db, response_id)
-    if row is None:
-        raise NotFoundError("Encuesta no encontrada")
-    return to_survey_out(row)
 
 
 def create_survey(db: Session, payload: SurveyCreate) -> SurveyOut:
     barrio = barrio_repo.get_barrio_by_nombre(db, payload.barrio)
     if barrio is None:
-        raise NotFoundError(f'Barrio no registrado: "{payload.barrio}"')
+        raise UnprocessableError("Barrio no existe")
     row = survey_repo.create_response(
         db,
         barrio_id=barrio.id,
@@ -64,9 +63,27 @@ def create_survey(db: Session, payload: SurveyCreate) -> SurveyOut:
     return to_survey_out(row)
 
 
-def map_reports(db: Session) -> list[dict]:
+def _facts_from_coords(
+    db: Session,
+    *,
+    barrio: str | None = None,
+    category: str | None = None,
+    severity: str | None = None,
+    comuna: str | None = None,
+    from_dt: datetime | None = None,
+    to_dt: datetime | None = None,
+) -> list[SurveyFact]:
     facts: list[SurveyFact] = []
-    for row, barrio_nombre, comuna_nombre, lat, lng in survey_repo.list_responses_with_coords(db):
+    rows = survey_repo.list_responses_with_coords(
+        db,
+        barrio=barrio,
+        categoria=category,
+        severidad=severity,
+        comuna=comuna,
+        from_dt=from_dt,
+        to_dt=to_dt,
+    )
+    for row, barrio_nombre, comuna_nombre, lat, lng in rows:
         facts.append(
             SurveyFact(
                 barrio=barrio_nombre,
@@ -78,19 +95,36 @@ def map_reports(db: Session) -> list[dict]:
                 lng=float(lng),
             )
         )
-    return build_map_reports(facts)
+    return facts
 
 
-def dashboard_summary(db: Session) -> dict:
-    facts: list[SurveyFact] = []
-    for row in survey_repo.list_responses(db):
-        facts.append(
-            SurveyFact(
-                barrio=row.barrio.nombre,
-                comuna=row.barrio.comuna.nombre,
-                category=row.categoria,  # type: ignore[arg-type]
-                severity=row.severidad,  # type: ignore[arg-type]
-                date=to_iso(row.fecha),
-            )
-        )
+def map_reports(
+    db: Session,
+    *,
+    comuna: str | None = None,
+    category: str | None = None,
+    severity: str | None = None,
+) -> list[dict]:
+    return build_map_reports(
+        _facts_from_coords(db, comuna=comuna, category=category, severity=severity)
+    )
+
+
+def dashboard_summary(
+    db: Session,
+    *,
+    comuna: str | None = None,
+    category: str | None = None,
+    severity: str | None = None,
+    from_dt: datetime | None = None,
+    to_dt: datetime | None = None,
+) -> dict:
+    facts = _facts_from_coords(
+        db,
+        comuna=comuna,
+        category=category,
+        severity=severity,
+        from_dt=from_dt,
+        to_dt=to_dt,
+    )
     return build_dashboard_summary(facts)

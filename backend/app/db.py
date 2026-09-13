@@ -1,4 +1,4 @@
-"""Sesión SQLAlchemy hacia PostgreSQL + PostGIS (no crea esquema: eso es `db/`)."""
+"""Engine SQLAlchemy + SessionLocal. No crea ni migra el esquema."""
 
 from collections.abc import Generator
 
