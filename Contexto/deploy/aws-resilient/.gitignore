@@ -1,0 +1,5 @@
+*.local.ps1
+secrets.local.ps1
+state.local.ps1
+*.pem
+userdata.generated/
