@@ -1,6 +1,6 @@
 # 06-asg-policies.ps1 - Las dos politicas de escalado del backend, con
 # ResourceLabel resuelto en tiempo de ejecucion (nunca escrito a mano).
-#   pv-back-req : peticiones por destino en el ALB = 10
+#   pv-back-req : peticiones por destino en el ALB = 1000 (valor de operacion)
 #   pv-back-cpu : CPU media del grupo = 65 %
 # La deuda de v1 fue dejar etiquetas que apuntaban a un ALB ya borrado: por eso
 # aqui se leen los identificadores reales, se construye la etiqueta y se verifica
@@ -10,7 +10,7 @@ param(
     [string]$Region  = 'us-east-1',
     [string]$Prefix  = 'pv',
     [string]$Project = 'pulsovecinal',
-    [double]$RequestsPerTarget = 10,
+    [double]$RequestsPerTarget = 1000,
     [double]$CpuPercent = 65
 )
 . "$PSScriptRoot\00-vars.ps1"

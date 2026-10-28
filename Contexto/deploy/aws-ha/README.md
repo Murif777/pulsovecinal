@@ -11,6 +11,12 @@ generan al desplegar y quedan en `state.local.ps1`, que esta en `.gitignore`.
 
 ---
 
+## Notas de capacidad del backend
+
+- El contenedor arranca uvicorn con **dos workers** (`--workers 2`) para usar los dos vCPU de la instancia.
+- `GET /api/encuestas` acepta `limit` (1-2000, por defecto 500) y `offset`; el listado ya no devuelve la tabla completa.
+- Con el pico de diseno documentado (419 peticiones/minuto a la API) la CPU medida por instancia se mantiene por debajo del 1 %.
+
 ## 1. Topologia
 
 ```
@@ -94,7 +100,7 @@ protege saturacion de CPU).
 
 | Politica | Metrica | Objetivo | Efecto observable |
 |---|---|---|---|
-| `pv-back-req` | ALBRequestCountPerTarget | 10 peticiones/destino | escala de 2 a 6 al recibir carga |
+| `pv-back-req` | ALBRequestCountPerTarget | 1.000 peticiones/destino | escala solo ante demanda real; no oscila con diez usuarios |
 | `pv-back-cpu` | ASGAverageCPUUtilization | 65 % | escala en y reduce al bajar la CPU |
 
 `ResourceLabel` **se resuelve en tiempo de ejecucion**
@@ -104,10 +110,12 @@ recien escrita. La etiqueta se contrasta contra el ARN vigente y el script falla
 si no coincide, de modo que una etiqueta desactualizada no puede pasar
 inadvertida.
 
-En laboratorio el umbral de 10 peticiones por destino es deliberadamente bajo
-para producir evidencia en minutos. **Antes de operar de verdad hay que
-reajustarlo** (el diseno propone 1.000 peticiones/minuto por instancia) o el
-grupo oscilara con diez usuarios navegando.
+El valor por defecto es **1.000 peticiones por minuto por destino**, que es el
+umbral de operacion: con el pico de diseno (419 peticiones/minuto a la API) dos
+instancias absorben la demanda sin escalar, y el grupo solo crece cuando la
+demanda real lo exige. Ese valor es una **hipotesis de produccion pendiente de
+validar con prueba de carga**; para demostrar el escalado en minutos se puede
+ejecutar el script con `-RequestsPerTarget 10`.
 
 ---
 
@@ -233,8 +241,8 @@ Decisiones:
 Deudas declaradas:
 
 - El perfil `LabInstanceProfile` no es de minimo privilegio por capa (lo impone el laboratorio).
-- El umbral de escalado es de laboratorio (10 peticiones/destino), no de produccion.
-- RDS sin cifrado en reposo configurado explicitamente y con retencion de 1 dia.
+- El umbral de escalado (1.000 peticiones/destino) es una hipotesis de operacion sin prueba de carga que la respalde.
+- RDS sin cifrado en reposo (la retencion ya esta en 7 dias y la proteccion de borrado activa).
 - Un unico NAT: la zona B pierde salida a Internet si cae la zona A.
 - No hay alarmas de aplicacion, solo una de destinos no sanos en el ALB.
 

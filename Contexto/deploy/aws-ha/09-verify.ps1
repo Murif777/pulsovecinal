@@ -55,7 +55,12 @@ if (-not $SkipWrite) {
     if ($found -ne 1) { $fail += 'no se releyo la encuesta' }
 }
 
-Write-Host '6) sitio estatico'
+Write-Host '6) paginacion del listado'
+$pg = @(Invoke-RestMethod -Uri "$api/api/encuestas?limit=1&offset=0" -Headers $hdr -TimeoutSec 25)
+Write-Host "   limit=1 devuelve $($pg.Count) fila(s)"
+if ($pg.Count -gt 1) { $fail += "limit ignorado ($($pg.Count) filas)" }
+
+Write-Host '7) sitio estatico'
 $r = Invoke-WebRequest $site -UseBasicParsing -TimeoutSec 20
 Write-Host "   raiz=$($r.StatusCode)"
 if ($r.StatusCode -ne 200) { $fail += "sitio=$($r.StatusCode)" }

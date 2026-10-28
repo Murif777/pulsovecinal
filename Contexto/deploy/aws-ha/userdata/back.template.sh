@@ -58,7 +58,8 @@ docker run -d --name pulso-api --restart unless-stopped -p 8080:8000 \
   -e DATABASE_URL="postgresql+psycopg://${DB_USER}:${DB_PASS}@${DB_HOST}:5432/${DB_NAME}" \
   -e JWT_SECRET="$JWT_SECRET" \
   -e CORS_ORIGINS="$CORS_ORIGINS" \
-  miguecaramirez/pulsovecinal-backend:latest
+  miguecaramirez/pulsovecinal-backend:latest \
+  uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2
 for i in $(seq 1 40); do curl -fsS http://127.0.0.1:8080/health >/dev/null 2>&1 && break; sleep 5; done
 curl -s -o /dev/null -w "health=%{http_code}\n" http://127.0.0.1:8080/health
 echo "PV_BACK_DONE $(date -u +%FT%TZ)"
