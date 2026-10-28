@@ -35,6 +35,8 @@ def list_surveys(
     comuna: str | None = None,
     from_dt: datetime | None = None,
     to_dt: datetime | None = None,
+    limit: int | None = None,
+    offset: int = 0,
 ) -> list[SurveyOut]:
     rows = survey_repo.list_responses(
         db,
@@ -44,6 +46,8 @@ def list_surveys(
         comuna=comuna,
         from_dt=from_dt,
         to_dt=to_dt,
+        limit=limit,
+        offset=offset,
     )
     return [to_survey_out(row) for row in rows]
 

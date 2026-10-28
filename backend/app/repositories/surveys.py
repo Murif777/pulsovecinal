@@ -56,6 +56,8 @@ def list_responses(
     comuna: str | None = None,
     from_dt: datetime | None = None,
     to_dt: datetime | None = None,
+    limit: int | None = None,
+    offset: int = 0,
 ) -> list[SurveyResponse]:
     stmt = _apply_filters(
         _with_territory(),
@@ -67,6 +69,10 @@ def list_responses(
         to_dt=to_dt,
         barrio_joined=False,
     )
+    if offset:
+        stmt = stmt.offset(offset)
+    if limit is not None:
+        stmt = stmt.limit(limit)
     return list(db.execute(stmt).unique().scalars().all())
 
 

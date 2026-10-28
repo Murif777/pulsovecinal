@@ -21,6 +21,8 @@ def list_encuestas(
     comuna: str | None = Query(default=None),
     from_: str | None = Query(default=None, alias="from"),
     to: str | None = Query(default=None),
+    limit: int = Query(default=500, ge=1, le=2000, description="Máximo de filas devueltas"),
+    offset: int = Query(default=0, ge=0, description="Filas a saltar"),
     db: Session = Depends(get_db),
 ) -> list[SurveyOut]:
     return survey_service.list_surveys(
@@ -31,6 +33,8 @@ def list_encuestas(
         comuna=comuna,
         from_dt=parse_iso(from_),
         to_dt=parse_iso(to, end_of_day=True),
+        limit=limit,
+        offset=offset,
     )
 
 
