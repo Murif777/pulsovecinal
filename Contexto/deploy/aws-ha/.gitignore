@@ -1,0 +1,4 @@
+# Secretos y estado generados en el despliegue. Nunca versionar.
+state.local.ps1
+*.local.ps1
+userdata/generated/
