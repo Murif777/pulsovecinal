@@ -2,7 +2,7 @@ import { fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import MapaPage from '../MapaPage'
 import { getMapReports as computeMockReports, mockSurveyResponses } from '../../../lib/mockData'
-import type { MapReport, SurveyResponse } from '../../../lib/types'
+import type { MapPoint, MapReport, SurveyResponse } from '../../../lib/types'
 import {
   createFetchMock,
   errorJson,
@@ -18,8 +18,10 @@ import type { FetchRoute } from '../../../lib/__tests__/fetchMock'
 vi.mock('react-leaflet', async () => {
   const React = await import('react')
   return {
-    MapContainer: ({ children }: { children?: React.ReactNode }) =>
-      React.createElement('div', { 'data-testid': 'mapa-container' }, children),
+    MapContainer: React.forwardRef<HTMLDivElement, { children?: React.ReactNode }>(
+      ({ children }, ref) =>
+        React.createElement('div', { 'data-testid': 'mapa-container', ref }, children),
+    ),
     TileLayer: () => null,
     CircleMarker: () => null,
     Popup: () => null,
@@ -37,11 +39,38 @@ function apiReports(extra: readonly SurveyResponse[] = []): MapReport[] {
   return computeMockReports([...mockSurveyResponses, ...extra])
 }
 
-/** Routes the mock for the single endpoint MapaPage consumes. */
-function stubMapEndpoint(reports: MapReport[]) {
+/** Reports with a consented location, as GET /api/mapa/puntos serves them. */
+const POINTS: MapPoint[] = [
+  {
+    id: 'p1',
+    barrio: 'La Esperanza',
+    comuna: 'Comuna 2',
+    lat: 10.4721,
+    lng: -73.2405,
+    category: 'seguridad',
+    severity: 'alta',
+    date: '2026-10-05T14:00:00Z',
+  },
+  {
+    id: 'p2',
+    barrio: 'El Popul',
+    comuna: 'Comuna 1',
+    lat: 10.4589,
+    lng: -73.2571,
+    category: 'energia',
+    severity: 'media',
+    date: '2026-10-06T09:00:00Z',
+  },
+]
+
+/** Routes the mock for the endpoints MapaPage consumes. */
+function stubMapEndpoint(reports: MapReport[], points: MapPoint[] = POINTS) {
   stubRoutes(
     fetchMock,
-    new Map<string, FetchRoute>([['/api/mapa/reportes', () => okJson(reports)]]),
+    new Map<string, FetchRoute>([
+      ['/api/mapa/reportes', () => okJson(reports)],
+      ['/api/mapa/puntos', () => okJson(points)],
+    ]),
   )
 }
 
@@ -64,7 +93,7 @@ describe('MapaPage', () => {
   it('renders the heading, filter chips, legend and the mocked map container', async () => {
     await renderLoadedMap()
 
-    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Mapa interactivo')
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Reportes en vivo')
     expect(screen.getByTestId('mapa-container')).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Seguridad' })).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Crítica' })).toBeTruthy()
@@ -154,5 +183,54 @@ describe('MapaPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Reintentar mapa' }))
 
     expect(await screen.findByTestId('mapa-container')).toBeTruthy()
+  })
+})
+
+describe('MapaPage points layer', () => {
+  it('switches to the points layer and counts the located reports', async () => {
+    await renderLoadedMap()
+    expect(screen.queryByText(/reportes con ubicación/)).toBeNull()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Puntos' }))
+
+    expect(await screen.findByText(/2 reportes con ubicación/)).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Puntos' }).getAttribute('aria-pressed')).toBe('true')
+    expect(screen.getByRole('button', { name: 'Por barrio' }).getAttribute('aria-pressed')).toBe('false')
+  })
+
+  it('applies the category filter to the points', async () => {
+    await renderLoadedMap()
+    fireEvent.click(screen.getByRole('button', { name: 'Puntos' }))
+    await screen.findByText(/2 reportes con ubicación/)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Seguridad' }))
+
+    expect(await screen.findByText(/1 reporte con ubicación/)).toBeTruthy()
+  })
+
+  it('explains when there are no located reports yet', async () => {
+    stubMapEndpoint(apiReports(), [])
+    await renderLoadedMap()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Puntos' }))
+
+    expect(await screen.findByText('Aún no hay reportes con ubicación para estos filtros.')).toBeTruthy()
+  })
+
+  it('keeps the barrio layer working when the points request fails', async () => {
+    stubRoutes(
+      fetchMock,
+      new Map<string, FetchRoute>([
+        ['/api/mapa/reportes', () => okJson(apiReports())],
+        ['/api/mapa/puntos', () => errorJson(500, { detail: 'boom' })],
+      ]),
+    )
+    await renderLoadedMap()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Puntos' }))
+
+    expect(await screen.findByText('No se pudieron cargar los puntos.')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Por barrio' }))
+    expect(screen.getByText('15')).toBeTruthy()
   })
 })

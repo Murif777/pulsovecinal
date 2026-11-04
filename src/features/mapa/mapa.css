@@ -8,15 +8,15 @@
 
 .pulso-popup .leaflet-popup-content-wrapper,
 .pulso-popup.leaflet-popup-content-wrapper {
-  border-radius: 0.75rem;
-  border: 1px solid #e2e8f0; /* slate-200 */
+  border-radius: 1.1rem;
+  border: 1px solid #e3ded0;
   box-shadow:
     0 12px 32px -8px rgb(15 23 42 / 0.25),
     0 4px 12px -4px rgb(15 23 42 / 0.12);
 }
 
 .pulso-popup .leaflet-popup-content {
-  margin: 14px 16px;
+  margin: 18px 20px;
   line-height: 1.45;
 }
 
@@ -42,4 +42,13 @@
 .pulso-popup .leaflet-popup-close-button:hover {
   background-color: #f1f5f9; /* slate-100 */
   color: #334155; /* slate-700 */
+}
+
+/* Basemap apagado: el color queda reservado a los marcadores de severidad. */
+.leaflet-tile-pane {
+  filter: grayscale(0.85) contrast(0.92) brightness(1.06);
+}
+.leaflet-container {
+  background: #f0ede4;
+  font-family: inherit;
 }

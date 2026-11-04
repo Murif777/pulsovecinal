@@ -1,5 +1,5 @@
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import EncuestaPage from './EncuestaPage'
 import {
   createFetchMock,
@@ -88,7 +88,7 @@ describe('EncuestaPage', () => {
   it('renders the survey form and an empty list fed by the API', async () => {
     await renderPage()
 
-    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Encuestas')
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Participa')
     expect(screen.getByRole('form')).toBeTruthy()
     expect(screen.getByLabelText('Barrio')).toBeTruthy()
     expect(screen.getByLabelText('Categoría')).toBeTruthy()
@@ -270,5 +270,185 @@ describe('EncuestaPage', () => {
     expect((screen.getByLabelText('Descripción') as HTMLTextAreaElement).value).toBe(
       'Falta alumbrado en el parque principal',
     )
+  })
+})
+
+describe('EncuestaPage location', () => {
+  type Fix = { latitude: number; longitude: number; accuracy: number }
+  type GeoSuccess = (position: { coords: Fix }) => void
+  type GeoFailure = (error: { code: number }) => void
+
+  const clearWatch = vi.fn()
+
+  function stubGeolocation(impl: (ok: GeoSuccess, fail: GeoFailure) => void) {
+    Object.defineProperty(navigator, 'geolocation', {
+      configurable: true,
+      value: {
+        watchPosition: vi.fn((ok: GeoSuccess, fail: GeoFailure) => {
+          impl(ok, fail)
+          return 7
+        }),
+        clearWatch,
+      },
+    })
+  }
+
+  function authorizeAndLocate() {
+    fireEvent.click(screen.getByRole('checkbox', { name: /Autorizo que se guarde mi ubicación/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Agregar mi ubicación actual' }))
+  }
+
+  afterEach(() => {
+    clearWatch.mockClear()
+    vi.useRealTimers()
+    Reflect.deleteProperty(navigator, 'geolocation')
+  })
+
+  it('keeps the location button locked until the user authorizes', async () => {
+    stubGeolocation((ok) => ok({ coords: { latitude: 10.461, longitude: -73.248, accuracy: 10 } }))
+    await renderPage()
+
+    const button = screen.getByRole('button', { name: 'Agregar mi ubicación actual' }) as HTMLButtonElement
+    expect(button.disabled).toBe(true)
+
+    fireEvent.click(screen.getByRole('checkbox', { name: /Autorizo que se guarde mi ubicación/ }))
+    expect(button.disabled).toBe(false)
+    expect(screen.getByRole('link', { name: 'Leer la política de datos' }).getAttribute('href')).toBe('/legal')
+  })
+
+  it('attaches a fix within 20 m, suggests the nearest barrio and posts it with the consent evidence', async () => {
+    stubGeolocation((ok) => ok({ coords: { latitude: 10.461034, longitude: -73.247968, accuracy: 18.4 } }))
+    await renderPage()
+
+    authorizeAndLocate()
+
+    expect(await screen.findByText(/Ubicación agregada · precisión de unos 18 m/)).toBeTruthy()
+    expect((screen.getByLabelText('Barrio') as HTMLSelectElement).value).toBe('La Esperanza')
+    expect(clearWatch).toHaveBeenCalledWith(7)
+
+    fireEvent.change(screen.getByLabelText('Categoría'), { target: { value: 'seguridad' } })
+    fireEvent.change(screen.getByLabelText('Urgencia'), { target: { value: 'media' } })
+    fireEvent.change(screen.getByLabelText('Descripción'), { target: { value: 'Falta alumbrado' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Enviar reporte' }))
+
+    await screen.findByText('Tu reporte se guardó correctamente.')
+    const post = fetchMock.mock.calls.find(([, init]) => init?.method === 'POST')
+    expect(JSON.parse(String(post?.[1]?.body))).toMatchObject({
+      lat: 10.46103,
+      lng: -73.24797,
+      accuracy: 18,
+      consent: true,
+      consent_version: '2026-11-v1',
+    })
+  })
+
+  it('keeps waiting while the accuracy is worse than 20 m and gives up with a clear message', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    stubGeolocation((ok) => ok({ coords: { latitude: 10.461, longitude: -73.248, accuracy: 85 } }))
+    await renderPage()
+
+    authorizeAndLocate()
+    expect(await screen.findByText(/Precisión actual: 85 m/)).toBeTruthy()
+
+    await act(async () => {
+      vi.advanceTimersByTime(16_000)
+    })
+
+    expect(await screen.findByText(/La mejor precisión fue de unos 85 m y se necesitan 20 m o menos/)).toBeTruthy()
+    expect(screen.queryByText(/Ubicación agregada/)).toBeNull()
+    expect(clearWatch).toHaveBeenCalled()
+  })
+
+  it('removes the location with "Quitar" so no location fields are sent', async () => {
+    stubGeolocation((ok) => ok({ coords: { latitude: 10.461, longitude: -73.248, accuracy: 10 } }))
+    await renderPage()
+
+    authorizeAndLocate()
+    await screen.findByText(/Ubicación agregada/)
+    fireEvent.click(screen.getByRole('button', { name: 'Quitar' }))
+
+    expect(screen.getByRole('button', { name: 'Agregar mi ubicación actual' })).toBeTruthy()
+    fillValidForm()
+    fireEvent.click(screen.getByRole('button', { name: 'Enviar reporte' }))
+    await screen.findByText('Tu reporte se guardó correctamente.')
+    const post = fetchMock.mock.calls.find(([, init]) => init?.method === 'POST')
+    const body = JSON.parse(String(post?.[1]?.body))
+    expect(body).not.toHaveProperty('lat')
+    expect(body).not.toHaveProperty('consent')
+  })
+
+  it('shows a message when the user denies permission and keeps the form usable', async () => {
+    stubGeolocation((_ok, fail) => fail({ code: 1 }))
+    await renderPage()
+
+    authorizeAndLocate()
+
+    expect(await screen.findByText(/No diste permiso/)).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Enviar reporte' })).toBeTruthy()
+  })
+
+  it('rejects a fix outside Valledupar', async () => {
+    stubGeolocation((ok) => ok({ coords: { latitude: 4.711, longitude: -74.072, accuracy: 10 } }))
+    await renderPage()
+
+    authorizeAndLocate()
+
+    expect(await screen.findByText(/fuera de Valledupar/)).toBeTruthy()
+    expect(screen.queryByText(/Ubicación agregada/)).toBeNull()
+  })
+
+  it('explains when the browser has no geolocation support', async () => {
+    await renderPage()
+
+    authorizeAndLocate()
+
+    expect(await screen.findByText(/no permite obtener la ubicación/)).toBeTruthy()
+  })
+
+  it('shows the rate-limit message returned by the API', async () => {
+    stubRoutes(
+      fetchMock,
+      new Map<string, FetchRoute>([
+        ['/api/barrios', () => okJson(BARRIOS_FIXTURE)],
+        [
+          '/api/encuestas',
+          (_input, init) =>
+            (init?.method ?? 'GET') === 'POST'
+              ? errorJson(429, { detail: 'Demasiados intentos. Espera un momento e intenta de nuevo.' })
+              : okJson([]),
+        ],
+      ]),
+    )
+    await renderPage()
+
+    fillValidForm()
+    fireEvent.click(screen.getByRole('button', { name: 'Enviar reporte' }))
+
+    expect(await screen.findByText('Demasiados intentos. Espera un momento e intenta de nuevo.')).toBeTruthy()
+  })
+})
+
+describe('EncuestaPage with many reports', () => {
+  it('renders the list in steps so it does not overflow, and reveals more on demand', async () => {
+    storedResponses = Array.from({ length: 30 }, (_, index) => ({
+      id: `r-${index}`,
+      barrio: 'La Esperanza',
+      comuna: 'Comuna 2',
+      category: 'seguridad',
+      severity: 'media',
+      description: `Reporte ${index}`,
+      date: new Date(Date.UTC(2026, 7, 1, 12, index)).toISOString(),
+    }))
+    await renderPage()
+
+    const list = await screen.findByRole('list', { name: 'Tus reportes' })
+    expect(within(list).getAllByRole('listitem')).toHaveLength(12)
+
+    fireEvent.click(screen.getByRole('button', { name: /Mostrar más \(18 restantes\)/ }))
+    expect(within(list).getAllByRole('listitem')).toHaveLength(24)
+
+    fireEvent.click(screen.getByRole('button', { name: /Mostrar más \(6 restantes\)/ }))
+    expect(within(list).getAllByRole('listitem')).toHaveLength(30)
+    expect(screen.queryByRole('button', { name: /Mostrar más/ })).toBeNull()
   })
 })

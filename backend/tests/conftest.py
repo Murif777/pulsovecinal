@@ -10,6 +10,12 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from app.main import app
+from app.ratelimit import reset_all
+
+
+@pytest.fixture(autouse=True)
+def _reset_rate_limits() -> None:
+    reset_all()
 
 
 @pytest.fixture

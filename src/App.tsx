@@ -1,8 +1,9 @@
-import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import AppLayout from './components/layout/AppLayout'
 import DashboardPage from './features/dashboard/DashboardPage'
 import EncuestaPage from './features/encuesta/EncuestaPage'
 import LandingPage from './features/landing/LandingPage'
+import LegalPage from './features/legal/LegalPage'
 import LoginPage from './features/dashboard/LoginPage'
 import MapaPage from './features/mapa/MapaPage'
 import RequireAuth from './features/dashboard/RequireAuth'
@@ -19,8 +20,12 @@ export function AppRoutes() {
       <Route path="login" element={<LoginPage />} />
       <Route element={<AppLayout />}>
         <Route index element={<LandingPage />} />
-        <Route path="encuesta" element={<EncuestaPage />} />
-        <Route path="mapa" element={<MapaPage />} />
+        <Route path="legal" element={<LegalPage />} />
+        <Route path="participa" element={<EncuestaPage />} />
+        <Route path="reportes-en-vivo" element={<MapaPage />} />
+        {/* Rutas anteriores: se conservan para enlaces ya compartidos. */}
+        <Route path="encuesta" element={<Navigate to="/participa" replace />} />
+        <Route path="mapa" element={<Navigate to="/reportes-en-vivo" replace />} />
         <Route
           path="dashboard"
           element={

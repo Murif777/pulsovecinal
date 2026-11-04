@@ -27,7 +27,7 @@ vi.mock('react-leaflet', async () => {
 
 const fetchMock = createFetchMock()
 
-/** Barrio registry served to /encuesta (same fixture as the EncuestaPage tests). */
+/** Barrio registry served to /participa (same fixture as the EncuestaPage tests). */
 const BARRIOS_FIXTURE = [
   { nombre: 'La Esperanza', comuna: 'Comuna 2', lat: 10.461, lng: -73.248 },
   { nombre: 'Novalito', comuna: 'Comuna 2', lat: 10.455, lng: -73.24 },
@@ -73,8 +73,8 @@ function renderRoute(initialPath: string) {
 type NavCase = readonly [linkLabel: string, expectedTitle: string, awaitReady: () => Promise<HTMLElement>]
 
 const navCases: readonly NavCase[] = [
-  ['Encuestas', 'Encuestas', () => screen.findByRole('option', { name: 'La Esperanza' })],
-  ['Mapa', 'Mapa interactivo', () => screen.findByTestId('mapa-container')],
+  ['Participa', 'Participa', () => screen.findByRole('option', { name: 'La Esperanza' })],
+  ['Reportes en vivo', 'Reportes en vivo', () => screen.findByTestId('mapa-container')],
 ]
 
 describe('App', () => {
@@ -91,8 +91,8 @@ describe('App', () => {
 
     const hrefs = screen.getAllByRole('link').map((link) => link.getAttribute('href'))
 
-    expect(hrefs).toContain('/encuesta')
-    expect(hrefs).toContain('/mapa')
+    expect(hrefs).toContain('/participa')
+    expect(hrefs).toContain('/reportes-en-vivo')
     expect(hrefs).toContain('/login')
   })
 
@@ -126,15 +126,21 @@ describe('App', () => {
     expect(screen.getByText('pulso2026')).toBeTruthy()
   })
 
-  it('renders the citizen survey form on /encuesta instead of the placeholder', async () => {
-    renderRoute('/encuesta')
+  it('renders the citizen survey form on /participa instead of the placeholder', async () => {
+    renderRoute('/participa')
 
-    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Encuestas')
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Participa')
     expect(screen.getByRole('form')).toBeTruthy()
     expect(screen.getByLabelText('Barrio')).toBeTruthy()
     expect(screen.queryByText(/En construcción/)).toBeNull()
 
     // Flush the barrios fetch so the test ends with no pending async work.
     await screen.findByRole('option', { name: 'La Esperanza' })
+  })
+
+  it('renders the legal page on /legal', () => {
+    renderRoute('/legal')
+
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Política de datos y consentimiento')
   })
 })

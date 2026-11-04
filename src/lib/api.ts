@@ -1,6 +1,7 @@
 import type {
   ComplaintCategory,
   DashboardSummary,
+  MapPoint,
   MapReport,
   Severity,
   SurveyResponse,
@@ -9,13 +10,14 @@ import type {
 /**
  * HTTP client for the PulsoVecinal backend API.
  *
- * The base path is RELATIVE (`/api`): in development Vite proxies it to
- * http://localhost:8000 (vite.config.ts) and in production nginx routes it to
- * the backend container (nginx.conf). Every endpoint wrapper below mirrors a
- * frozen contract of the FastAPI backend — no new dependencies, plain fetch.
+ * The path prefix is `/api`. In development Vite proxies it to
+ * http://localhost:8000 (vite.config.ts). In AWS the static site lives on S3,
+ * so the production build sets VITE_API_BASE to the public ALB origin and
+ * the browser calls `{origin}/api/...` directly. FastAPI already serves
+ * those paths; CORS_ORIGINS on the API must include the S3 website origin.
  */
 
-export const API_BASE = '/api'
+export const API_BASE = (import.meta.env.VITE_API_BASE ?? '').replace(/\/$/, '') || '/api'
 
 /** localStorage key of the persisted session (shared with dashboard/auth). */
 export const SESSION_STORAGE_KEY = 'pulsovecinal.session'
@@ -59,6 +61,14 @@ export interface SurveyCreateBody {
   readonly category: ComplaintCategory
   readonly severity: Severity
   readonly description?: string
+  /** Optional GPS fix captured by the browser; both or none. */
+  readonly lat?: number
+  readonly lng?: number
+  /** Accuracy radius in meters of the GPS fix (backend requires 20 or less). */
+  readonly accuracy?: number
+  /** Express consent to store and publish the location; required with lat/lng. */
+  readonly consent?: boolean
+  readonly consent_version?: string
 }
 
 function getLocalStorage(): Storage {
@@ -201,6 +211,13 @@ export function getMapReports(
   params?: Record<string, string | undefined>,
 ): Promise<MapReport[]> {
   return apiGet<MapReport[]>('/mapa/reportes', params)
+}
+
+/** GET /api/mapa/puntos — reports that carry a consented location (rounded for the public). */
+export function getMapPoints(
+  params?: Record<string, string | undefined>,
+): Promise<MapPoint[]> {
+  return apiGet<MapPoint[]>('/mapa/puntos', params)
 }
 
 /** GET /api/dashboard/resumen — criticality summary of all barrios. */

@@ -6,7 +6,9 @@ from jose import JWTError
 from sqlalchemy.orm import Session
 
 from app.db import get_db
+from app.config import get_settings
 from app.errors import UnauthorizedError
+from app.ratelimit import rate_limit
 from app.repositories import users as user_repo
 from app.schemas import LoginRequest, TokenOut, UsuarioPublic
 from app.services import auth as auth_service
@@ -34,7 +36,15 @@ def get_current_user(
     return UsuarioPublic(id=user.id, usuario=user.usuario, rol=user.rol, nombre=user.nombre)
 
 
-@router.post("/login", response_model=TokenOut, response_model_exclude_none=True)
+_login_limit = rate_limit(get_settings().rate_limit_login_per_minute, 60, "login")
+
+
+@router.post(
+    "/login",
+    response_model=TokenOut,
+    response_model_exclude_none=True,
+    dependencies=[Depends(_login_limit)],
+)
 def login(payload: LoginRequest, db: Session = Depends(get_db)) -> TokenOut:
     try:
         return auth_service.login(db, payload.usuario, payload.contrasena)
