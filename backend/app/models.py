@@ -4,7 +4,7 @@ from datetime import datetime
 from uuid import UUID
 
 from geoalchemy2 import Geometry
-from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, text
+from sqlalchemy import DateTime, Float, ForeignKey, Integer, String, Text, text
 from sqlalchemy.dialects.postgresql import ENUM, UUID as PG_UUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -71,6 +71,13 @@ class SurveyResponse(Base):
     severidad: Mapped[str] = mapped_column(severity_level, nullable=False)
     descripcion: Mapped[str | None] = mapped_column(Text)
     encuestador: Mapped[str | None] = mapped_column(String(100))
+    # Ubicación del reporte (opcional). No se expone en GET /api/encuestas.
+    lat: Mapped[float | None] = mapped_column(Float)
+    lng: Mapped[float | None] = mapped_column(Float)
+    ubicacion_precision_m: Mapped[float | None] = mapped_column(Float)
+    # Evidencia del consentimiento (Ley 1581 de 2012): cuándo y qué texto se aceptó.
+    ubicacion_consent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    ubicacion_consent_version: Mapped[str | None] = mapped_column(String(30))
     fecha: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,

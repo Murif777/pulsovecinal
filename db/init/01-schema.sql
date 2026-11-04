@@ -32,12 +32,23 @@ CREATE TABLE survey_responses (
   severidad   severity_level NOT NULL,
   descripcion TEXT,
   encuestador VARCHAR(100),
+  lat         DOUBLE PRECISION CHECK (lat BETWEEN -90 AND 90),    -- ubicación opcional del reporte
+  lng         DOUBLE PRECISION CHECK (lng BETWEEN -180 AND 180),
+  ubicacion_precision_m     DOUBLE PRECISION CHECK (ubicacion_precision_m >= 0),  -- radio GPS (m)
+  ubicacion_consent_at      TIMESTAMPTZ,              -- cuándo aceptó el uso de su ubicación
+  ubicacion_consent_version VARCHAR(30),              -- versión del texto legal aceptado
   fecha       TIMESTAMPTZ NOT NULL DEFAULT now(),
-  created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CONSTRAINT chk_responses_latlng CHECK ((lat IS NULL) = (lng IS NULL)),
+  -- Una ubicación solo existe si hay evidencia de consentimiento (Ley 1581 de 2012).
+  CONSTRAINT chk_responses_location_consent CHECK (
+    lat IS NULL OR (ubicacion_consent_at IS NOT NULL AND ubicacion_consent_version IS NOT NULL)
+  )
 );
 CREATE INDEX idx_responses_barrio    ON survey_responses (barrio_id);
 CREATE INDEX idx_responses_categoria ON survey_responses (categoria);
 CREATE INDEX idx_responses_fecha     ON survey_responses (fecha);
+CREATE INDEX idx_responses_located   ON survey_responses (fecha) WHERE lat IS NOT NULL;  -- capa de puntos
 
 -- Usuarios (login del dashboard)
 CREATE TABLE usuarios (

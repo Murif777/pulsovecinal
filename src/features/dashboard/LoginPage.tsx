@@ -4,24 +4,6 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { ApiError } from '../../lib/api'
 import { login } from './auth'
 
-/** Decorative heartbeat glyph for the login card (the PulsoVecinal mark). */
-function PulseMark() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      className="h-4 w-4"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M2 12h4l3-8 4 16 3-8h6" />
-    </svg>
-  )
-}
-
 /**
  * /login page: centered demo gate for the dashboard. Rendered OUTSIDE the
  * AppLayout (no navbar) so the card stays clean. Reads the route the user
@@ -50,68 +32,102 @@ export default function LoginPage() {
     }
   }
 
+  const inputClass =
+    'mt-1.5 min-h-[2.75rem] w-full rounded-xl border border-slate-300 bg-white px-3.5 text-sm text-slate-900 focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600/25'
+
   return (
-    <section className="mx-auto flex min-h-[70vh] w-full max-w-6xl items-center justify-center px-4 py-10 sm:px-6">
-      <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-8 shadow-xl shadow-slate-900/5">
-        <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-teal-700">
-          <PulseMark />
-          PulsoVecinal · Valledupar
-        </p>
-        <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-slate-900">Iniciar sesión</h1>
-        <p className="mt-1 text-sm leading-6 text-slate-500">
-          Accede al dashboard de criticidad barrial.
-        </p>
-
-        <div className="mt-4 rounded-lg border border-teal-200 bg-teal-50 px-3 py-2 text-xs leading-5 text-teal-800">
-          <strong className="font-semibold">Demo académica</strong> — usuario:{' '}
-          <code className="font-semibold">analista</code> · contraseña:{' '}
-          <code className="font-semibold">pulso2026</code>
+    <section className="grid min-h-screen lg:grid-cols-[1.1fr_1fr]">
+      {/* Panel de marca */}
+      <div className="relative hidden overflow-hidden bg-brand-950 p-12 text-paper lg:flex lg:flex-col lg:justify-between">
+        <div className="grain pointer-events-none absolute inset-0 opacity-[0.07]" aria-hidden="true" />
+        <div
+          className="pointer-events-none absolute -bottom-32 -left-24 h-96 w-96 rounded-full bg-pulse-500/25 blur-3xl"
+          aria-hidden="true"
+        />
+        <a href="/" className="relative flex items-center gap-3 font-display text-2xl font-bold">
+          <img src="/logo.png" alt="" width={44} height={44} className="h-11 w-11 rounded-xl" />
+          <span>
+            Pulso<span className="text-pulse-400">Vecinal</span>
+          </span>
+        </a>
+        <div className="relative">
+          <p className="max-w-md font-display text-5xl font-bold leading-[1.05]">
+            Los reportes de los vecinos, ordenados por urgencia.
+          </p>
+          <svg viewBox="0 0 400 60" className="mt-10 h-14 w-full max-w-md text-pulse-400" aria-hidden="true">
+            <polyline
+              className="ecg-line"
+              points="0,30 120,30 140,30 160,6 180,56 200,22 215,34 235,30 400,30"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2.5}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
         </div>
+        <p className="relative text-sm text-brand-200/70">Valledupar, Cesar</p>
+      </div>
 
-        <form onSubmit={handleSubmit} className="mt-6 space-y-4" aria-label="Iniciar sesión">
-          <div>
-            <label htmlFor="login-username" className="block text-sm font-medium text-slate-700">
-              Usuario
-            </label>
-            <input
-              id="login-username"
-              type="text"
-              value={username}
-              onChange={(event) => setUsername(event.target.value)}
-              autoComplete="username"
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-600/20"
-            />
-          </div>
-          <div>
-            <label htmlFor="login-password" className="block text-sm font-medium text-slate-700">
-              Contraseña
-            </label>
-            <input
-              id="login-password"
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              autoComplete="current-password"
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-600/20"
-            />
+      {/* Formulario */}
+      <div className="flex items-center justify-center bg-paper px-6 py-12">
+        <div className="w-full max-w-sm">
+          <h1 className="text-4xl font-bold text-slate-900">Iniciar sesión</h1>
+          <p className="mt-2 text-sm leading-6 text-slate-600">
+            Accede al dashboard de criticidad barrial.
+          </p>
+
+          <div className="mt-5 rounded-xl border border-dashed border-brand-300 bg-brand-50 px-3.5 py-2.5 text-xs leading-5 text-brand-800">
+            <strong className="font-semibold">Demo académica</strong> — usuario:{' '}
+            <code className="font-semibold">analista</code> · contraseña:{' '}
+            <code className="font-semibold">pulso2026</code>
           </div>
 
-          {error && (
-            <p
-              role="alert"
-              className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+          <form onSubmit={handleSubmit} className="mt-6 space-y-4" aria-label="Iniciar sesión">
+            <div>
+              <label htmlFor="login-username" className="block text-sm font-semibold text-slate-700">
+                Usuario
+              </label>
+              <input
+                id="login-username"
+                type="text"
+                value={username}
+                onChange={(event) => setUsername(event.target.value)}
+                autoComplete="username"
+                className={inputClass}
+              />
+            </div>
+            <div>
+              <label htmlFor="login-password" className="block text-sm font-semibold text-slate-700">
+                Contraseña
+              </label>
+              <input
+                id="login-password"
+                type="password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                autoComplete="current-password"
+                className={inputClass}
+              />
+            </div>
+
+            {error && (
+              <p
+                role="alert"
+                className="rounded-xl border border-pulse-500/30 bg-pulse-500/5 px-3.5 py-2.5 text-sm font-medium text-pulse-600"
+              >
+                {error}
+              </p>
+            )}
+
+            <button
+              type="submit"
+              className="min-h-[2.75rem] w-full rounded-full bg-slate-900 px-4 text-sm font-bold text-paper transition-colors duration-150 hover:bg-brand-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600"
             >
-              {error}
-            </p>
-          )}
-
-          <button
-            type="submit"
-            className="w-full rounded-lg bg-teal-700 px-4 py-2 text-sm font-semibold text-white transition-colors duration-150 hover:bg-teal-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600"
-          >
-            Entrar
-          </button>
-        </form>
+              Entrar
+            </button>
+          </form>
+        </div>
       </div>
     </section>
   )

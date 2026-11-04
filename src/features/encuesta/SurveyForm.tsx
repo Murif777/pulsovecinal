@@ -3,12 +3,16 @@ import { ALL_CATEGORIES, ALL_SEVERITIES, CATEGORY_LABELS } from '../../lib/types
 import type { ComplaintCategory, Severity } from '../../lib/types'
 import type { BarrioInfo } from '../../lib/api'
 import { SEVERITY_LABELS } from './labels'
+import LocationField from './LocationField'
+import type { CapturedLocation } from './geo'
 
 export type SurveyFormValues = {
   barrio: string
   category: ComplaintCategory
   severity: Severity
   description: string
+  /** Optional GPS fix; omitted when the citizen did not add one. */
+  location?: CapturedLocation
 }
 
 type SurveyFormProps = {
@@ -59,18 +63,13 @@ function validate(values: typeof EMPTY_FORM): FieldErrors {
 
 function FieldLabel({
   htmlFor,
-  step,
   children,
 }: {
   htmlFor: string
-  step: string
   children: string
 }) {
   return (
     <div className="flex items-center gap-2">
-      <span aria-hidden="true" className="font-mono text-xs font-medium text-teal-700">
-        {step}
-      </span>
       <label htmlFor={htmlFor} className="text-sm font-semibold text-slate-800">
         {children}
       </label>
@@ -88,6 +87,7 @@ export default function SurveyForm({
 }: SurveyFormProps) {
   const [values, setValues] = useState(EMPTY_FORM)
   const [errors, setErrors] = useState<FieldErrors>({})
+  const [location, setLocation] = useState<CapturedLocation | null>(null)
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -101,8 +101,10 @@ export default function SurveyForm({
       category: values.category as ComplaintCategory,
       severity: values.severity as Severity,
       description: values.description.trim(),
+      ...(location !== null ? { location } : {}),
     })
     if (saved) {
+      setLocation(null)
       setValues(EMPTY_FORM)
       setErrors({})
     }
@@ -115,18 +117,18 @@ export default function SurveyForm({
       onSubmit={handleSubmit}
       noValidate
       aria-labelledby="encuesta-heading"
-      className="min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white"
+      className="min-w-0 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-lift"
     >
-      <div className="border-b border-slate-100 bg-slate-50 px-6 py-5">
-        <h2 className="text-lg font-semibold tracking-tight text-slate-900">Reportar una necesidad</h2>
-        <p className="mt-1 text-sm text-slate-600">
+      <div className="bg-brand-950 px-6 py-6 text-paper">
+        <h2 className="font-display text-2xl font-bold tracking-tight">Reportar una necesidad</h2>
+        <p className="mt-1 text-sm text-brand-100/75">
           Completa los cuatro campos para registrar el problema de tu barrio.
         </p>
       </div>
 
       <div className="space-y-5 p-6">
         <div>
-          <FieldLabel htmlFor="survey-barrio" step="01">
+          <FieldLabel htmlFor="survey-barrio">
             Barrio
           </FieldLabel>
           <select
@@ -172,9 +174,21 @@ export default function SurveyForm({
           ) : null}
         </div>
 
+        <LocationField
+          value={location}
+          onChange={setLocation}
+          barrios={barrios}
+          selectedBarrio={values.barrio}
+          onSuggestBarrio={(nombre) => {
+            setValues((current) => ({ ...current, barrio: nombre }))
+            setErrors((current) => ({ ...current, barrio: undefined }))
+          }}
+          disabled={submitting}
+        />
+
         <div className="grid gap-5 sm:grid-cols-2">
           <div>
-            <FieldLabel htmlFor="survey-category" step="02">
+            <FieldLabel htmlFor="survey-category">
               Categoría
             </FieldLabel>
             <select
@@ -203,7 +217,7 @@ export default function SurveyForm({
           </div>
 
           <div>
-            <FieldLabel htmlFor="survey-severity" step="03">
+            <FieldLabel htmlFor="survey-severity">
               Urgencia
             </FieldLabel>
             <select
@@ -233,7 +247,7 @@ export default function SurveyForm({
         </div>
 
         <div>
-          <FieldLabel htmlFor="survey-description" step="04">
+          <FieldLabel htmlFor="survey-description">
             Descripción
           </FieldLabel>
           <textarea
@@ -259,7 +273,7 @@ export default function SurveyForm({
         <button
           type="submit"
           disabled={barriosUnavailable || submitting}
-          className="inline-flex w-full items-center justify-center rounded-xl bg-teal-700 px-4 py-3 text-sm font-semibold text-white transition hover:bg-teal-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex min-h-[3rem] w-full items-center justify-center rounded-full bg-pulse-600 px-4 text-sm font-bold text-white shadow-card transition hover:bg-pulse-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pulse-600 disabled:cursor-not-allowed disabled:opacity-60"
         >
           Enviar reporte
         </button>

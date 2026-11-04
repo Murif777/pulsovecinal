@@ -165,20 +165,24 @@ function SurveyDetailDialog({ report, onClose }: DetailDialogProps) {
   )
 }
 
+/** Reports rendered per "Mostrar más" step; keeps the DOM small with thousands of rows. */
+const PAGE_SIZE = 12
+
 /** Compact listing of citizen reports; full text opens in a detail dialog. */
 export default function SurveyList({ responses }: SurveyListProps) {
   const items = sortNewestFirst(responses)
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
   const selected = items.find((item) => item.id === selectedId) ?? null
 
   return (
     <section
       aria-labelledby="survey-list-heading"
-      className="min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white"
+      className="flex max-h-[min(46rem,calc(100dvh-7rem))] min-w-0 flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-card"
     >
-      <div className="flex items-start justify-between gap-3 border-b border-slate-100 bg-slate-50 px-6 py-5">
+      <div className="flex shrink-0 items-start justify-between gap-3 border-b border-slate-200 px-6 py-5">
         <div className="min-w-0">
-          <h2 id="survey-list-heading" className="text-lg font-semibold tracking-tight text-slate-900">
+          <h2 id="survey-list-heading" className="font-display text-2xl font-bold tracking-tight text-slate-900">
             Tus reportes
           </h2>
           <p className="mt-1 text-sm text-slate-600">
@@ -192,7 +196,7 @@ export default function SurveyList({ responses }: SurveyListProps) {
         ) : null}
       </div>
 
-      <div className="p-5">
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-5">
         {items.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-10 text-center">
             <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-teal-700 ring-1 ring-slate-200">
@@ -204,7 +208,7 @@ export default function SurveyList({ responses }: SurveyListProps) {
           </div>
         ) : (
           <ul aria-label="Tus reportes" className="min-w-0 space-y-3">
-            {items.map((item) => (
+            {items.slice(0, visibleCount).map((item) => (
               <li
                 key={item.id}
                 className={`flex min-w-0 items-center gap-3 rounded-xl border border-slate-200 border-l-4 bg-slate-50/60 px-3 py-3 transition hover:bg-white ${SEVERITY_BAR[item.severity]}`}
@@ -238,6 +242,15 @@ export default function SurveyList({ responses }: SurveyListProps) {
             ))}
           </ul>
         )}
+        {items.length > visibleCount ? (
+          <button
+            type="button"
+            onClick={() => setVisibleCount((count) => count + PAGE_SIZE)}
+            className="mt-4 inline-flex min-h-[2.75rem] w-full items-center justify-center rounded-full border border-slate-300 bg-white px-4 text-sm font-bold text-slate-800 transition hover:border-slate-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600"
+          >
+            Mostrar más ({items.length - visibleCount} restantes)
+          </button>
+        ) : null}
       </div>
 
       <SurveyDetailDialog report={selected} onClose={() => setSelectedId(null)} />

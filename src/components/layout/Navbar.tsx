@@ -90,70 +90,41 @@ type NavItem = {
 
 const NAV_ITEMS: readonly NavItem[] = [
   { to: '/', label: 'Inicio', icon: HomeIcon, end: true },
-  { to: '/encuesta', label: 'Encuestas', icon: ClipboardListIcon },
-  { to: '/mapa', label: 'Mapa', icon: MapPinIcon },
+  { to: '/participa', label: 'Participa', icon: ClipboardListIcon },
+  { to: '/reportes-en-vivo', label: 'Reportes en vivo', icon: MapPinIcon },
   { to: '/login', label: 'Login', icon: LogInIcon },
 ]
 
 function navLinkClassName({ isActive }: { isActive: boolean }) {
   const base =
-    'relative flex flex-col items-center gap-0.5 rounded-lg px-3 py-1.5 text-[11px] font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600'
+    'relative flex min-h-[2.75rem] items-center gap-2 rounded-full px-3.5 py-2 text-sm font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600'
   const state = isActive
-    ? 'text-teal-700'
-    : 'text-slate-500 hover:text-slate-900'
+    ? 'bg-slate-900 text-paper'
+    : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
   return `${base} ${state}`
 }
 
-/** Top navigation bar with icon-only links. Compact single-row on all screens. */
+/** Barra superior: marca editorial a la izquierda y navegacion en pildoras. */
 export default function Navbar() {
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/90 backdrop-blur">
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-2.5 sm:px-6">
+    <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-paper/85 backdrop-blur-md">
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
         <Link
           to="/"
-          className="flex items-center gap-2 rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600"
+          className="flex items-center gap-2.5 rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600"
         >
-          <span
-            className="flex h-8 w-8 items-center justify-center rounded-lg bg-teal-600 text-white"
-            aria-hidden="true"
-          >
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={2}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="h-5 w-5"
-            >
-              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-            </svg>
+          <img src="/logo.png" alt="" width={40} height={40} className="h-10 w-10 rounded-xl" />
+          <span className="font-display text-xl font-bold tracking-tight text-slate-900">
+            Pulso<span className="text-pulse-500">Vecinal</span>
           </span>
-          <span className="text-lg font-bold tracking-tight">PulsoVecinal</span>
         </Link>
-        <nav aria-label="Navegaci+¦n principal">
+        <nav aria-label="NavegaciÃ³n principal">
           <ul className="flex items-center gap-1">
             {NAV_ITEMS.map((item) => (
               <li key={item.to}>
-                <NavLink
-                  to={item.to}
-                  end={item.end}
-                  className={navLinkClassName}
-                  aria-label={item.label}
-                  title={item.label}
-                >
-                  {({ isActive }) => (
-                    <>
-                      <item.icon className="h-5 w-5" />
-                      <span>{item.label}</span>
-                      {isActive && (
-                        <span
-                          className="absolute -bottom-2.5 left-1/2 h-0.5 w-5 -translate-x-1/2 rounded-full bg-teal-600"
-                          aria-hidden="true"
-                        />
-                      )}
-                    </>
-                  )}
+                <NavLink to={item.to} end={item.end} className={navLinkClassName} aria-label={item.label} title={item.label}>
+                  <item.icon className="h-4 w-4" />
+                  <span className="hidden sm:inline">{item.label}</span>
                 </NavLink>
               </li>
             ))}

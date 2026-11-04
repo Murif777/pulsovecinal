@@ -18,10 +18,10 @@ export default function SeverityChart({ data }: SeverityChartProps) {
           data={[...data]}
           dataKey="count"
           nameKey="label"
-          innerRadius={55}
-          outerRadius={80}
+          innerRadius={62}
+          outerRadius={88}
           paddingAngle={2}
-          strokeWidth={2}
+          stroke="#ffffff" strokeWidth={3}
         >
           {data.map((entry) => (
             <Cell key={entry.severity} fill={entry.color} />

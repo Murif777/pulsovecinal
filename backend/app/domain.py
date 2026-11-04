@@ -29,5 +29,10 @@ SEVERITY_WEIGHTS: dict[Severity, int] = {
     "critica": 4,
 }
 
+# Precisión máxima aceptada para guardar una ubicación (radio, en metros).
+MAX_LOCATION_ACCURACY_M = 20.0
+# Versión vigente del texto legal que el ciudadano acepta (ver src/features/legal).
+LEGAL_VERSION = "2026-11-v1"
+
 CATEGORY_VALUES = set(ALL_CATEGORIES)
 SEVERITY_VALUES = set(ALL_SEVERITIES)

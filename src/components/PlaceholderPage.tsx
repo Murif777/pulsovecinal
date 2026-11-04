@@ -15,7 +15,7 @@ export default function PlaceholderPage({ title, description }: PlaceholderPageP
     <section className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6">
       <div className="mx-auto max-w-2xl">
         <span className="inline-flex items-center gap-2 rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-sm font-medium text-amber-800">
-          🚧 En construcción
+          En construcción
         </span>
         <h1 className="mt-6 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">{title}</h1>
         <p className="mt-4 leading-7 text-slate-600">{description}</p>

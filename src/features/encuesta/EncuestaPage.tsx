@@ -1,15 +1,18 @@
+import { Icon } from '../../components/Icon'
+import { LEGAL_VERSION } from '../legal/legalConfig'
+import type { IconName } from '../../components/Icon'
 import { useEffect, useState } from 'react'
-import { createSurvey, getBarrios, getSurveys } from '../../lib/api'
+import { ApiError, createSurvey, getBarrios, getSurveys } from '../../lib/api'
 import type { BarrioInfo } from '../../lib/api'
 import type { SurveyResponse } from '../../lib/types'
 import SurveyForm from './SurveyForm'
 import type { SurveyFormValues } from './SurveyForm'
 import SurveyList from './SurveyList'
 
-const STEPS = [
-  { n: '01', title: 'Elige el barrio', detail: 'Selecciona tu zona en Valledupar' },
-  { n: '02', title: 'Cuenta el problema', detail: 'Categoría, urgencia y descripción' },
-  { n: '03', title: 'Revisa tus reportes', detail: 'Ábrelos con el ojo cuando quieras' },
+const STEPS: readonly { icon: IconName; title: string; detail: string }[] = [
+  { icon: 'pin', title: 'Elige el barrio', detail: 'Selecciona tu zona en Valledupar' },
+  { icon: 'pen', title: 'Cuenta el problema', detail: 'Categoría, urgencia y descripción' },
+  { icon: 'eye', title: 'Revisa tus reportes', detail: 'Ábrelos con el ojo cuando quieras' },
 ]
 
 /**
@@ -26,6 +29,7 @@ export default function EncuestaPage() {
   const [barriosRetryKey, setBarriosRetryKey] = useState(0)
 
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
+  const [errorDetail, setErrorDetail] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -79,60 +83,70 @@ export default function EncuestaPage() {
         category: values.category,
         severity: values.severity,
         description: values.description.trim(),
+        ...(values.location !== undefined
+          ? {
+              lat: values.location.lat,
+              lng: values.location.lng,
+              accuracy: values.location.accuracy,
+              consent: true,
+              consent_version: LEGAL_VERSION,
+            }
+          : {}),
       })
       const latest = await getSurveys()
       setResponses(latest)
       setStatus('saved')
       return true
-    } catch {
+    } catch (error) {
+      setErrorDetail(error instanceof ApiError && error.status === 429 ? error.message : null)
       setStatus('error')
       return false
     }
   }
 
   return (
-    <div className="bg-gradient-to-b from-teal-50/60 to-white">
-      <section className="border-b border-slate-100">
-        <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
-          <span className="inline-flex items-center rounded-full border border-teal-200 bg-white px-3 py-1 text-xs font-medium text-teal-700">
-            Valledupar · reporte ciudadano
-          </span>
-          <h1 id="encuesta-heading" className="mt-5 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-5xl">
-            Encuestas
-          </h1>
-          <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
-            Reporta una necesidad de tu barrio: elige la zona, la categoría del problema, qué tan urgente es y
-            descríbelo. Tus respuestas se registran en la plataforma y quedan a disposición del mapa y del
-            dashboard.
-          </p>
+    <div>
+      <section className="border-b border-slate-200">
+        <div className="mx-auto grid w-full max-w-6xl gap-10 px-4 py-14 sm:px-6 sm:py-20 lg:grid-cols-[1.3fr_1fr] lg:items-end">
+          <div>
+            <h1
+              id="encuesta-heading"
+              className="text-6xl font-bold leading-[0.95] text-slate-900 sm:text-7xl lg:text-8xl"
+            >
+              Participa
+            </h1>
+            <p className="mt-6 max-w-xl text-base leading-7 text-slate-600 sm:text-lg">
+              Reporta una necesidad de tu barrio: elige la zona, la categoría del problema, qué tan urgente es y
+              descríbelo. Tus respuestas se registran en la plataforma y quedan a disposición del mapa y del
+              dashboard.
+            </p>
+          </div>
+          <div className="divide-y divide-slate-200 border-y border-slate-300">
+            {STEPS.map((step) => (
+              <div key={step.title} className="flex items-center gap-4 py-4">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-900 text-pulse-400">
+                  <Icon name={step.icon} className="h-5 w-5" />
+                </span>
+                <span>
+                  <span className="block text-sm font-bold text-slate-900">{step.title}</span>
+                  <span className="mt-0.5 block text-xs text-slate-500">{step.detail}</span>
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
       <section className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
-        <div className="grid gap-3 sm:grid-cols-3">
-          {STEPS.map((step) => (
-            <div
-              key={step.n}
-              className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3"
-            >
-              <span className="font-mono text-sm font-medium text-teal-700">{step.n}</span>
-              <span>
-                <span className="block text-sm font-semibold text-slate-900">{step.title}</span>
-                <span className="mt-0.5 block text-xs text-slate-500">{step.detail}</span>
-              </span>
-            </div>
-          ))}
-        </div>
-
         {status === 'saving' ? (
-          <p role="status" className="mt-6 rounded-2xl border border-teal-100 bg-teal-50 px-4 py-3 text-sm text-teal-900">
+          <p role="status" className="mt-6 rounded-2xl border border-brand-200 bg-brand-50 px-4 py-3 text-sm font-semibold text-brand-900">
             Guardando tu reporte…
           </p>
         ) : null}
         {status === 'saved' ? (
           <p
             role="status"
-            className="mt-6 rounded-2xl border border-teal-100 bg-teal-50 px-4 py-3 text-sm text-teal-900"
+            className="mt-6 rounded-2xl border border-brand-200 bg-brand-50 px-4 py-3 text-sm font-semibold text-brand-900"
           >
             Tu reporte se guardó correctamente.
           </p>
@@ -140,13 +154,13 @@ export default function EncuestaPage() {
         {status === 'error' ? (
           <p
             role="alert"
-            className="mt-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+            className="mt-6 rounded-2xl border border-pulse-500/30 bg-pulse-500/5 px-4 py-3 text-sm font-semibold text-pulse-600"
           >
-            No se pudo guardar el reporte. Intenta de nuevo.
+            {errorDetail ?? 'No se pudo guardar el reporte. Intenta de nuevo.'}
           </p>
         ) : null}
 
-        <div className="mt-8 grid min-w-0 gap-6 lg:grid-cols-2 lg:items-start">
+        <div className="mt-8 grid min-w-0 gap-6 lg:grid-cols-[1fr_1.05fr] lg:items-start">
           <div className="min-w-0">
             <SurveyForm
               barrios={barrios}

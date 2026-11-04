@@ -8,9 +8,15 @@ import Navbar from './Navbar'
  */
 export default function AppLayout() {
   return (
-    <div className="flex min-h-screen flex-col bg-white text-slate-900">
+    <div className="flex min-h-screen flex-col bg-paper text-slate-900">
+      <a
+        href="#contenido"
+        className="sr-only z-[2000] rounded-full bg-slate-900 px-4 py-2 text-sm font-bold text-paper focus:not-sr-only focus:absolute focus:left-4 focus:top-4"
+      >
+        Saltar al contenido
+      </a>
       <Navbar />
-      <main className="flex-1">
+      <main id="contenido" className="flex-1">
         <Outlet />
       </main>
       <Footer />

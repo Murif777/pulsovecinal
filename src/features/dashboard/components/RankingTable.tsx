@@ -66,10 +66,11 @@ function SortableHeader({ label, sortKey, sort, onSortChange, align = 'left' }: 
  * tinted with the traffic-light color of its maximum severity.
  */
 export default function RankingTable({ rows, sort, onSortChange, onSelectBarrio }: RankingTableProps) {
+  const maxScore = Math.max(1, ...rows.map((row) => row.score))
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-card">
       <table className="w-full text-left text-sm">
-        <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+        <thead className="border-b border-slate-200 bg-slate-100/60 text-[11px] uppercase tracking-[0.14em] text-slate-500">
           <tr>
             <th scope="col" className="px-4 py-3 font-semibold">
               #
@@ -89,7 +90,7 @@ export default function RankingTable({ rows, sort, onSortChange, onSelectBarrio 
           {rows.map((row, index) => (
             <tr
               key={row.barrio}
-              className={index === 0 ? 'bg-teal-50/50' : 'border-t border-slate-100'}
+              className={index === 0 ? 'bg-pulse-500/[0.06]' : 'border-t border-slate-100'}
             >
               <td className="px-4 py-3 text-slate-500">{index + 1}</td>
               <td className="px-4 py-3 font-medium text-slate-900">
@@ -116,8 +117,21 @@ export default function RankingTable({ rows, sort, onSortChange, onSelectBarrio 
               <td className="px-4 py-3 text-slate-500">{row.comuna}</td>
               <td className="px-4 py-3 tabular-nums text-slate-700">{row.totalCount}</td>
               <td className="px-4 py-3 text-slate-700">{CATEGORY_LABELS[row.topCategory]}</td>
-              <td className="px-4 py-3 text-right font-bold tabular-nums text-slate-900">
-                {row.score}
+              <td className="px-4 py-3">
+                <span className="flex items-center justify-end gap-3">
+                  <span
+                    aria-hidden="true"
+                    className="hidden h-1.5 w-24 overflow-hidden rounded-full bg-slate-200 sm:block"
+                  >
+                    <span
+                      className="block h-full rounded-full bg-pulse-500"
+                      style={{ width: `${Math.round((row.score / maxScore) * 100)}%` }}
+                    />
+                  </span>
+                  <span className="w-8 text-right font-display text-lg font-bold tabular-nums text-slate-900">
+                    {row.score}
+                  </span>
+                </span>
               </td>
             </tr>
           ))}

@@ -22,6 +22,13 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     jwt_expire_minutes: int = 480
     cors_origins: str = "http://localhost:5173,http://localhost:8080"
+    # Límite de frecuencia por IP (ver app/ratelimit.py).
+    rate_limit_enabled: bool = True
+    rate_limit_surveys_per_minute: int = 5
+    rate_limit_surveys_per_hour: int = 30
+    rate_limit_login_per_minute: int = 10
+    # Proxies de confianza delante de la API (ALB = 1; ALB + nginx = 2).
+    trusted_proxy_hops: int = 1
 
     @property
     def sqlalchemy_url(self) -> str:

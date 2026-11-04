@@ -84,6 +84,10 @@ def create_response(
     severidad: str,
     descripcion: str | None,
     encuestador: str | None,
+    lat: float | None = None,
+    lng: float | None = None,
+    accuracy: float | None = None,
+    consent_version: str | None = None,
 ) -> SurveyResponse:
     row = SurveyResponse(
         barrio_id=barrio_id,
@@ -91,6 +95,11 @@ def create_response(
         severidad=severidad,
         descripcion=descripcion,
         encuestador=encuestador,
+        lat=lat,
+        lng=lng,
+        ubicacion_precision_m=accuracy,
+        ubicacion_consent_at=func.now() if lat is not None else None,
+        ubicacion_consent_version=consent_version if lat is not None else None,
     )
     db.add(row)
     db.commit()
@@ -133,3 +142,31 @@ def list_responses_with_coords(
         comuna_joined=True,
     )
     return list(db.execute(stmt).all())
+
+
+def list_located_responses(
+    db: Session,
+    *,
+    categoria: str | None = None,
+    severidad: str | None = None,
+    comuna: str | None = None,
+    limit: int = 2000,
+) -> list[SurveyResponse]:
+    """Respuestas con ubicación y consentimiento registrado (las únicas publicables)."""
+    stmt = (
+        _with_territory()
+        .where(SurveyResponse.lat.is_not(None))
+        .where(SurveyResponse.lng.is_not(None))
+        .where(SurveyResponse.ubicacion_consent_at.is_not(None))
+    )
+    if comuna:
+        stmt = (
+            stmt.join(Barrio, SurveyResponse.barrio_id == Barrio.id)
+            .join(Comuna, Barrio.comuna_id == Comuna.id)
+            .where(Comuna.nombre == comuna)
+        )
+    if categoria:
+        stmt = stmt.where(SurveyResponse.categoria == categoria)
+    if severidad:
+        stmt = stmt.where(SurveyResponse.severidad == severidad)
+    return list(db.execute(stmt.limit(limit)).unique().scalars().all())

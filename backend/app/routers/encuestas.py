@@ -6,7 +6,9 @@ from sqlalchemy.orm import Session
 from app.dates import parse_iso
 from app.db import get_db
 from app.domain import Category, Severity
+from app.config import get_settings
 from app.errors import UnprocessableError
+from app.ratelimit import rate_limit
 from app.schemas import SurveyCreate, SurveyOut
 from app.services import surveys as survey_service
 
@@ -38,7 +40,18 @@ def list_encuestas(
     )
 
 
-@router.post("", response_model=SurveyOut, status_code=201)
+_settings = get_settings()
+# Dos ventanas: ráfaga corta (por minuto) y volumen sostenido (por hora).
+_burst_limit = rate_limit(_settings.rate_limit_surveys_per_minute, 60, "encuestas-min")
+_hourly_limit = rate_limit(_settings.rate_limit_surveys_per_hour, 3600, "encuestas-hora")
+
+
+@router.post(
+    "",
+    response_model=SurveyOut,
+    status_code=201,
+    dependencies=[Depends(_burst_limit), Depends(_hourly_limit)],
+)
 def create_encuesta(payload: SurveyCreate, db: Session = Depends(get_db)) -> SurveyOut:
     try:
         return survey_service.create_survey(db, payload)

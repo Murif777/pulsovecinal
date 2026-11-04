@@ -121,3 +121,17 @@ export interface DashboardSummary {
   /** Period spanned by the underlying responses. */
   readonly period: SummaryPeriod
 }
+
+/** One report with a consented location, as served by GET /api/mapa/puntos. */
+export interface MapPoint {
+  readonly id: string
+  readonly barrio: string
+  readonly comuna: string
+  /** Rounded by the API to about 11 m before being published. */
+  readonly lat: number
+  readonly lng: number
+  readonly category: ComplaintCategory
+  readonly severity: Severity
+  /** ISO 8601 timestamp of the report. */
+  readonly date: string
+}

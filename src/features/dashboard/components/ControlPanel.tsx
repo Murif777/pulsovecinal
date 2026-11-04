@@ -1,5 +1,5 @@
+import { CategoryIcon } from '../../../components/Icon'
 import { ALL_CATEGORIES, ALL_SEVERITIES, CATEGORY_LABELS } from '../../../lib/types'
-import type { ComplaintCategory } from '../../../lib/types'
 import { SEVERITY_LABELS } from '../dashboardUtils'
 import type { DashboardFilters, DatePreset } from '../filterUtils'
 import { activeFilterCount, EMPTY_FILTERS, presetRange, toggleInList } from '../filterUtils'
@@ -8,15 +8,6 @@ import PanelSection from './PanelSection'
 import ToggleChip from './ToggleChip'
 
 export type DashboardView = 'resumen' | 'reportes' | 'barrios'
-
-const CATEGORY_ICONS: Readonly<Record<ComplaintCategory, string>> = {
-  seguridad: '🔒',
-  alcantarillado: '💧',
-  energia: '⚡',
-  vias: '🛣️',
-  espacios_publicos: '🌳',
-  otros: '📋',
-}
 
 const VIEW_OPTIONS: readonly { id: DashboardView; label: string }[] = [
   { id: 'resumen', label: 'Resumen' },
@@ -102,10 +93,10 @@ export default function ControlPanel({
   return (
     <aside
       aria-label="Panel de control"
-      className="rounded-xl border border-slate-200 bg-slate-50 p-4 shadow-sm lg:sticky lg:top-20"
+      className="rounded-3xl border border-slate-200 bg-white p-5 shadow-card lg:sticky lg:top-24"
     >
       <div className="flex items-center justify-between gap-2">
-        <h2 className="text-sm font-bold text-slate-900">Controles</h2>
+        <h2 className="font-display text-lg font-bold text-slate-900">Controles</h2>
         {filterCount > 0 && (
           <span className="rounded-full bg-teal-700 px-2 py-0.5 text-[11px] font-semibold tabular-nums text-white">
             {filterCount} activo{filterCount === 1 ? '' : 's'}
@@ -225,7 +216,7 @@ export default function ControlPanel({
             <ToggleChip
               key={category}
               label={CATEGORY_LABELS[category]}
-              icon={<span aria-hidden="true">{CATEGORY_ICONS[category]}</span>}
+              icon={<CategoryIcon category={category} className="h-3.5 w-3.5" />}
               active={filters.categories.includes(category)}
               onClick={() =>
                 onFiltersChange({ ...filters, categories: toggleInList(filters.categories, category) })
