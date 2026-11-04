@@ -19,10 +19,10 @@ describe('LegalPage', () => {
     }
   })
 
-  it('states the 20 m accuracy requirement and the legal framework', () => {
+  it('states the 150 m accuracy requirement and the legal framework', () => {
     render(<LegalPage />)
 
-    expect(screen.getByText(/20 metros o menos/)).toBeTruthy()
+    expect(screen.getByText(/150 metros o menos/)).toBeTruthy()
     expect(screen.getByText(/Ley 1581 de 2012, régimen general/)).toBeTruthy()
   })
 

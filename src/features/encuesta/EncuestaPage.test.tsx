@@ -316,7 +316,7 @@ describe('EncuestaPage location', () => {
     expect(screen.getByRole('link', { name: 'Leer la política de datos' }).getAttribute('href')).toBe('/legal')
   })
 
-  it('attaches a fix within 20 m, suggests the nearest barrio and posts it with the consent evidence', async () => {
+  it('attaches a fix within 150 m, suggests the nearest barrio and posts it with the consent evidence', async () => {
     stubGeolocation((ok) => ok({ coords: { latitude: 10.461034, longitude: -73.247968, accuracy: 18.4 } }))
     await renderPage()
 
@@ -342,19 +342,19 @@ describe('EncuestaPage location', () => {
     })
   })
 
-  it('keeps waiting while the accuracy is worse than 20 m and gives up with a clear message', async () => {
+  it('keeps waiting while the accuracy is worse than 150 m and gives up with a clear message', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true })
-    stubGeolocation((ok) => ok({ coords: { latitude: 10.461, longitude: -73.248, accuracy: 85 } }))
+    stubGeolocation((ok) => ok({ coords: { latitude: 10.461, longitude: -73.248, accuracy: 220 } }))
     await renderPage()
 
     authorizeAndLocate()
-    expect(await screen.findByText(/Precisión actual: 85 m/)).toBeTruthy()
+    expect(await screen.findByText(/Precisión actual: 220 m/)).toBeTruthy()
 
     await act(async () => {
       vi.advanceTimersByTime(16_000)
     })
 
-    expect(await screen.findByText(/La mejor precisión fue de unos 85 m y se necesitan 20 m o menos/)).toBeTruthy()
+    expect(await screen.findByText(/La mejor precisión fue de unos 220 m y se necesitan 150 m o menos/)).toBeTruthy()
     expect(screen.queryByText(/Ubicación agregada/)).toBeNull()
     expect(clearWatch).toHaveBeenCalled()
   })

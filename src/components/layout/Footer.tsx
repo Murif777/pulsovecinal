@@ -6,8 +6,11 @@ export default function Footer() {
     <footer className="bg-brand-950 text-slate-300">
       <div className="mx-auto grid max-w-6xl gap-6 px-4 py-12 sm:px-6 md:grid-cols-[1.4fr_1fr]">
         <div>
-          <p className="font-display text-2xl font-bold text-paper">
-            Pulso<span className="text-pulse-400">Vecinal</span>
+          <p className="flex items-center gap-3 font-display text-2xl font-bold text-paper">
+            <img src="/logo.png" alt="" width={44} height={44} className="h-11 w-11 rounded-xl" />
+            <span>
+              Pulso<span className="text-pulse-400">Vecinal</span>
+            </span>
           </p>
           <p className="mt-3 max-w-md text-sm leading-6 text-slate-400">
             Proyecto académico de encuestas ciudadanas georreferenciadas para los barrios de

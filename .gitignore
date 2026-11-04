@@ -17,6 +17,9 @@ coverage
 .env
 .env.*
 !.env.example
+*.pem
+*.ppk
+output/deploy/.env.prod
 
 # Python (capa API)
 __pycache__/

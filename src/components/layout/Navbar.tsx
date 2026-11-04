@@ -113,14 +113,7 @@ export default function Navbar() {
           to="/"
           className="flex items-center gap-2.5 rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600"
         >
-          <span
-            className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-900 text-pulse-400"
-            aria-hidden="true"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-            </svg>
-          </span>
+          <img src="/logo.png" alt="" width={40} height={40} className="h-10 w-10 rounded-xl" />
           <span className="font-display text-xl font-bold tracking-tight text-slate-900">
             Pulso<span className="text-pulse-500">Vecinal</span>
           </span>

@@ -44,8 +44,11 @@ export default function LoginPage() {
           className="pointer-events-none absolute -bottom-32 -left-24 h-96 w-96 rounded-full bg-pulse-500/25 blur-3xl"
           aria-hidden="true"
         />
-        <a href="/" className="relative font-display text-2xl font-bold">
-          Pulso<span className="text-pulse-400">Vecinal</span>
+        <a href="/" className="relative flex items-center gap-3 font-display text-2xl font-bold">
+          <img src="/logo.png" alt="" width={44} height={44} className="h-11 w-11 rounded-xl" />
+          <span>
+            Pulso<span className="text-pulse-400">Vecinal</span>
+          </span>
         </a>
         <div className="relative">
           <p className="max-w-md font-display text-5xl font-bold leading-[1.05]">

@@ -24,8 +24,13 @@ export const VALLEDUPAR_BOUNDS = {
   maxLng: -73.18,
 } as const
 
-/** A fix is only attached to a report when its accuracy radius is this small (meters). */
-export const MAX_ACCURACY_M = 20
+/**
+ * A fix is only attached to a report when its accuracy radius is this small
+ * (meters). 150 m is a deliberately generous margin: it keeps the flow usable
+ * indoors and on devices without a real GPS, while still rejecting the
+ * kilometre-scale errors that IP geolocation produces.
+ */
+export const MAX_ACCURACY_M = 150
 
 /** How long to wait for the GPS to reach MAX_ACCURACY_M before giving up (ms). */
 export const LOCATION_WAIT_MS = 15_000
